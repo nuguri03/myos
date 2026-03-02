@@ -1,7 +1,6 @@
 [ORG 0x7c00]
 [BITS 16]
 
-
 start:
     mov si, msg
     call print
