@@ -10,6 +10,6 @@ qemu-system-x86_64 -drive format=raw,file=boot.bin -nographic
 
 ## feat/boot 개발 체크리스트
 - [x] "Hello BootLoader" 출력
-- [ ] 디스크에서 커널 읽어오기
+- [x] 디스크에서 커널 읽어오기
 - [ ] 32비트 보호 모드 전환
 - [ ] C 커널과 연결
