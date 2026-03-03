@@ -7,7 +7,7 @@ start:
     mov bx, 0x0000
 
     mov ah, 0x02    
-    mov al, 1
+    mov al, 8
     mov ch, 0
     mov cl, 2
     mov dh, 0

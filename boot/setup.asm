@@ -1,5 +1,7 @@
-[ORG 0x08000]
 [BITS 16]
+
+global setup_start
+extern main
 
 setup_start:
     cli
@@ -10,7 +12,7 @@ setup_start:
     or eax, 0x01
     mov cr0, eax
 
-    jmp 0x08:protected_mode_entry
+    jmp dword 0x08:protected_mode_entry
 
 gdt_start:
     dd 0x00000000, 0x00000000
@@ -35,8 +37,9 @@ protected_mode_entry:
     mov gs, ax
     mov ss, ax
 
-    mov edi, 0xB8000
-    mov byte [edi], 'P'
-    mov byte [edi + 1], 0x0A
+    mov esp, 0x90000
+    mov ebp, esp
+
+    call main
 
     jmp $
