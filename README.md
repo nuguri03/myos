@@ -4,7 +4,7 @@
 
 ## 실행하는 법
 ```
-cd boot
+make clean
 make
 ```
 
@@ -12,4 +12,4 @@ make
 - [x] "Hello BootLoader" 출력
 - [x] 디스크에서 커널 읽어오기
 - [x] 32비트 보호 모드 전환
-- [ ] C 커널과 연결
+- [x] C 커널과 연결
