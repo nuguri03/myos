@@ -10,8 +10,8 @@ boot.bin: boot/boot.asm
 setup.o: boot/setup.asm
 	nasm -f elf32 boot/setup.asm -o setup.o
 	
-main.o: main.c
-	gcc -m32 -ffreestanding -fno-pie -c main.c -o main.o
+main.o: kernel/main.c
+	gcc -m32 -ffreestanding -fno-pie -c kernel/main.c -o main.o
 
 kernel.bin: setup.o main.o
 	ld -m elf_i386 -Ttext 0x8000 -e setup_start --oformat binary setup.o main.o -o kernel.bin
