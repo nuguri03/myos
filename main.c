@@ -1,19 +1,19 @@
 void main() {
     char* video_memory = (char*) 0xB8000;
 
-    char msg[20] = "Welcome to C kernel"; // char* msg 가 안되는 이유를 알아야 함.
+    char* msg = "Welcome to C kernel";
 
-    for (int k = 0; k < 80 * 25 * 2; k += 2) {
-        video_memory[k] = ' ';
-        video_memory[k+1] = 0x1F;
+    for (int i = 0; i < 80 * 25 * 2; i += 2) {
+        video_memory[i] = ' ';
+        video_memory[i+1] = 0x1F;
     }
     
-    
-    int j = 0;
+    int i = 0;
     int idx = 0;
     while (msg[idx] != '\0') {
-        video_memory[j++] = msg[idx++];
-        video_memory[j++] = 0x1E;
+        video_memory[i] = msg[idx++];
+        video_memory[i+1] = 0x1E;
+        i += 2;
     }
     
     while (1) {}

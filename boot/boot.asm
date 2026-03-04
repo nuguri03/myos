@@ -6,12 +6,12 @@ start:
     mov es, ax
     mov bx, 0x0000
 
-    mov ah, 0x02    
-    mov al, 8
+    mov ah, 0x02
+    mov al, KERNEL_SECTORS      ; KERNEL_SECTOR = 커널의 크기
     mov ch, 0
-    mov cl, 2
-    mov dh, 0
-    mov dl, 0x80
+    mov cl, 2                   ; 2번째 섹터부터
+    mov dh, 0                   ; 0번째 헤드부터
+    mov dl, 0x80                ; 0x80(HDD)
 
     int 0x13
     jc disk_error
