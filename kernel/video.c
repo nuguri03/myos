@@ -4,7 +4,7 @@ static u16* video_memory = (u16*)0xB8000;
 static position cursor = {0 , 0};
 
 void clear_screen() {
-    for (i32 i = 0; i < 80 * 25; i++) {
+    for (i32 i = 0; i < WIDTH * HEIGHT; i++) {
         video_memory[i] = (DEFAULT_COLOR << 8) | (u8)' ';
     }
     cursor.x = 0; cursor.y = 0;
@@ -14,7 +14,7 @@ static inline u32 get_offset(position pos) {
     return pos.y * WIDTH + pos.x;
 }
 
-i32 print_char(u8 ch) {
+static i32 print_char(u8 ch) {
     if (cursor.x >= WIDTH) {
         cursor.x = 0;
         cursor.y++;
@@ -29,7 +29,7 @@ i32 print_char(u8 ch) {
         video_memory[offset] = (DEFAULT_COLOR << 8) | (u8)ch;
         cursor.x++;
     }
-
+    
     return 1;
 }
 

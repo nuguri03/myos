@@ -13,7 +13,7 @@ typedef struct {
 
 void clear_screen();
 static inline u32 get_offset(position pos);
-i32 print_char(u8 ch);
+static i32 print_char(u8 ch);
 i32 print_string(u8* buf, i32 len);
 
 #endif
