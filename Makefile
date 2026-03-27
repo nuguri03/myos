@@ -1,5 +1,10 @@
-KERNEL_SRCS = $(wildcard kernel/*.c)
-KERNEL_OBJS = $(KERNEL_SRCS:kernel/%.c=%.o)
+SRCDIRS = kernel lib
+INCDIR = include
+
+KERNEL_SRCS = $(foreach dir, $(SRCDIRS), $(wildcard $(dir)/*.c))
+KERNEL_OBJS = $(notdir $(KERNEL_SRCS:.c=.o))
+
+CFLAGS = -m32 -ffreestanding -fno-pie -fno-stack-protector -I$(INCDIR) -c
 
 all: disk.img
 	qemu-system-x86_64 -drive format=raw,file=disk.img
@@ -12,8 +17,11 @@ boot.bin: boot/boot.asm kernel.bin
 setup.o: boot/setup.asm
 	nasm -f elf32 boot/setup.asm -o setup.o
 	
-%.o: kernel/%.c
-	gcc -m32 -ffreestanding -fno-pie -c $< -o $@
+
+vpath %.c $(SRCDIRS)
+
+%.o: %.c
+	gcc $(CFLAGS) $< -o $@
 
 kernel.bin: setup.o $(KERNEL_OBJS)
 	ld -m elf_i386 -Ttext 0x8000 -e setup_start --oformat binary $^ -o kernel.bin

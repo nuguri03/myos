@@ -1,20 +1,11 @@
+#include "video.h"
+#include "string.h"
+
 void main() {
-    char* video_memory = (char*) 0xB8000;
-
-    char* msg = "Welcome to C kernel";
-
-    for (int i = 0; i < 80 * 25 * 2; i += 2) {
-        video_memory[i] = ' ';
-        video_memory[i+1] = 0x1F;
-    }
+    clear_screen();
     
-    int i = 0;
-    int idx = 0;
-    while (msg[idx] != '\0') {
-        video_memory[i] = msg[idx++];
-        video_memory[i+1] = 0x1E;
-        i += 2;
-    }
+    i8 *msg = "Hello MYOS!";
+    print_string(msg, strlen(msg));
     
     while (1) {}
 }
