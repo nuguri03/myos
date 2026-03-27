@@ -11,6 +11,8 @@ typedef struct {
     u16 x, y;
 } position;
 
+static void scroll();
+
 void clear_screen();
 static inline u32 get_offset(position pos);
 static i32 print_char(u8 ch);
