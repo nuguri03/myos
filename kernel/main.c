@@ -1,11 +1,10 @@
 #include "video.h"
+#include "printf.h"
 
 void main() {
     clear_screen();
 
-    char* msg = "Hello Kernel!\n";
-    i32 n = 32;
-    i32 hex = 28;
+    char* msg = "Hello Kernel!";
 
     // char* test_msg =
     //     "01: Hello MYOS! Testing screen boundaries... 0123456789abcdefghijklmnopqrstuvwxyz\n"
@@ -18,7 +17,7 @@ void main() {
     //     "08: The quick brown fox jumps over the lazy dog. Classic string for any test.\n"
     //     "09: 0x07 is the default color: Light Gray on Black. Bitwise OR is our friend.\n"
     //     "10: Halfway to the bottom of the standard 80x25 VGA text mode buffer area.\n"
-    //     "11: If you see this, your kstrlen and print_string loop are working together.\n"
+    //     "11: If you see this, your kstrlen and vga_print loop are working together.\n"
     //     "12: C, C++, and Rust are the pillars of low-level software. Great choice, YM!\n"
     //     "13: Does your cursor.x >= WIDTH check trigger correctly at the end of line?\n"
     //     "14: Kernel development requires patience and a lot of debugging via screen.\n"
@@ -35,9 +34,7 @@ void main() {
     //     "25: LINE 25: This is exactly at the bottom. Will the next char disappear?\n"
     //     "26: EXTRA LINE: If you see this without scrolling, it might overwrite line 0!\n";
 
-    print_string(msg);
-    print_int((const i32)n);
-    print_hex((const i32)hex);
+    kprintf("%s\n%x\n", msg, 125);
     
     while (1) {}
 }
