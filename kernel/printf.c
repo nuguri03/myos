@@ -37,10 +37,6 @@ static i32 itoa(const i32 number, char* str, u32 base) {
         str[end] = temp;
         start++;
         end--;
-
-        if (end < 0) {
-            return -1;
-        }
     }
     str[i] = '\0';
 
