@@ -1,9 +1,11 @@
-#include "video.h"
 #include "gdt.h"
+#include "idt.h"
+#include "video.h"
 #include "printf.h"
 
 void main() {
     init_gdt();
+    init_idt();
 
     clear_screen();
 
