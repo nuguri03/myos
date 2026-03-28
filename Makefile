@@ -1,33 +1,57 @@
+# 1. Directories & Variables
 SRCDIRS = kernel lib
-INCDIR = include
+INCDIR  = include
+BOOTDIR = boot
 
-KERNEL_SRCS = $(foreach dir, $(SRCDIRS), $(wildcard $(dir)/*.c))
-KERNEL_OBJS = $(notdir $(KERNEL_SRCS:.c=.o))
+CC      = gcc
+LD      = ld
+ASM     = nasm
 
-CFLAGS = -m32 -ffreestanding -fno-pie -fno-stack-protector -I$(INCDIR) -c
+CFLAGS  = -m32 -ffreestanding -fno-pie -fno-stack-protector -I$(INCDIR) -c
+LDFLAGS = -m elf_i386 -Ttext 0x8000 -e setup_start --oformat binary
 
-all: disk.img
-	qemu-system-x86_64 -drive format=raw,file=disk.img
+# 2. Source & Object Files
+C_SRCS   = $(foreach dir, $(SRCDIRS), $(wildcard $(dir)/*.c))
+ASM_SRCS = $(foreach dir, $(SRCDIRS), $(wildcard $(dir)/*.asm))
 
-boot.bin: boot/boot.asm kernel.bin
-	@KERNEL_SIZE=$$(stat -c %s kernel.bin); \
-	SECTORS=$$(( (KERNEL_SIZE + 511) / 512 )); \
-	nasm -f bin boot/boot.asm -D KERNEL_SECTORS=$$SECTORS -o boot.bin
+C_OBJS   = $(notdir $(C_SRCS:.c=.o))
+ASM_OBJS = $(notdir $(ASM_SRCS:.asm=.o))
 
-setup.o: boot/setup.asm
-	nasm -f elf32 boot/setup.asm -o setup.o
-	
+KERNEL_OBJS = $(C_OBJS) $(ASM_OBJS)
 
 vpath %.c $(SRCDIRS)
+vpath %.asm $(SRCDIRS)
 
-%.o: %.c
-	gcc $(CFLAGS) $< -o $@
+# 3. Phony Targets
+.PHONY: all run clean
+
+# 4. Build Rules
+all: disk.img
+
+run: disk.img
+	qemu-system-x86_64 -drive format=raw,file=$<
+
+disk.img: boot.bin kernel.bin
+	cat $^ > $@
 
 kernel.bin: setup.o $(KERNEL_OBJS)
-	ld -m elf_i386 -Ttext 0x8000 -e setup_start --oformat binary $^ -o kernel.bin
+	$(LD) $(LDFLAGS) $^ -o $@
 
-disk.img: kernel.bin boot.bin
-	cat boot.bin kernel.bin > disk.img
+# 5. Compile Rules
+boot.bin: $(BOOTDIR)/boot.asm kernel.bin
+	@KERNEL_SIZE=$$(stat -c %s kernel.bin); \
+	SECTORS=$$(( (KERNEL_SIZE + 511) / 512 )); \
+	$(ASM) -f bin $< -D KERNEL_SECTORS=$$SECTORS -o $@
 
+setup.o: $(BOOTDIR)/setup.asm
+	$(ASM) -f elf32 $< -o $@
+
+%.o: %.c
+	$(CC) $(CFLAGS) $< -o $@
+
+%.o: %.asm
+	$(ASM) -f elf32 $< -o $@
+
+# 6. Clean
 clean:
 	rm -rf *.bin *.o *.img
