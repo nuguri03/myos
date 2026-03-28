@@ -1,7 +1,10 @@
 #include "video.h"
+#include "gdt.h"
 #include "printf.h"
 
 void main() {
+    init_gdt();
+
     clear_screen();
 
     char* msg = "Hello Kernel!";
