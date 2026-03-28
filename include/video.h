@@ -7,11 +7,11 @@
 #define HEIGHT 25
 #define DEFAULT_COLOR 0x07
 
-typedef struct {
+struct cursor_t {
     u16 x, y;
-} cursor_t;
+};
 
-void clear_screen();
+void clear_vga();
 i32 vga_print_string(const char* buf, const i32 len);
 
 #endif

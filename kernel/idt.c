@@ -1,4 +1,5 @@
 #include "idt.h"
+#include "pic.h"
 
 struct idt_entry idt[256];
 struct idt_ptr idtp;
@@ -11,6 +12,10 @@ extern void isr16(); extern void isr17(); extern void isr18(); extern void isr19
 extern void isr20(); extern void isr21(); extern void isr22(); extern void isr23();
 extern void isr24(); extern void isr25(); extern void isr26(); extern void isr27();
 extern void isr28(); extern void isr29(); extern void isr30(); extern void isr31();
+extern void isr32(); extern void isr33(); extern void isr34(); extern void isr35();
+extern void isr36(); extern void isr37(); extern void isr38(); extern void isr39();
+extern void isr40(); extern void isr41(); extern void isr42(); extern void isr43();
+extern void isr44(); extern void isr45(); extern void isr46(); extern void isr47();
 
 static void idt_set_gate(u8 num, u32 base, u16 sel, u8 flags) {
     idt[num].base_low = base & 0xFFFF;
@@ -64,6 +69,26 @@ void init_idt() {
     idt_set_gate(29, (u32)isr29, 0x08, 0x8E);
     idt_set_gate(30, (u32)isr30, 0x08, 0x8E);
     idt_set_gate(31, (u32)isr31, 0x08, 0x8E);
+    idt_set_gate(32, (u32)isr32, 0x08, 0x8E);
+    idt_set_gate(33, (u32)isr33, 0x08, 0x8E);
+    idt_set_gate(34, (u32)isr34, 0x08, 0x8E);
+    idt_set_gate(35, (u32)isr35, 0x08, 0x8E);
+    idt_set_gate(36, (u32)isr36, 0x08, 0x8E);
+    idt_set_gate(37, (u32)isr37, 0x08, 0x8E);
+    idt_set_gate(38, (u32)isr38, 0x08, 0x8E);
+    idt_set_gate(39, (u32)isr39, 0x08, 0x8E);
+    idt_set_gate(40, (u32)isr40, 0x08, 0x8E);
+    idt_set_gate(41, (u32)isr41, 0x08, 0x8E);
+    idt_set_gate(42, (u32)isr42, 0x08, 0x8E);
+    idt_set_gate(43, (u32)isr43, 0x08, 0x8E);
+    idt_set_gate(44, (u32)isr44, 0x08, 0x8E);
+    idt_set_gate(45, (u32)isr45, 0x08, 0x8E);
+    idt_set_gate(46, (u32)isr46, 0x08, 0x8E);
+    idt_set_gate(47, (u32)isr47, 0x08, 0x8E);
+
+    pic_remap(0x20, 0x28);
 
     idt_load((u32)&idtp);
+
+    __asm__ volatile("sti");
 }

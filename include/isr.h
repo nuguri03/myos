@@ -13,8 +13,6 @@ struct registers {
     u32 eip, cs, eflags, useresp, ss;
 };
 
-typedef struct registers registers_t;   
-
-void isr_handler(registers_t regs);
+void isr_handler(struct registers* regs);
 
 #endif

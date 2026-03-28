@@ -1,7 +1,10 @@
 #include "isr.h"
+#include "pic.h"
 #include "printf.h"
 
-char *exception_messages[] = {
+const char *interrupt_messages[] = {
+    // 0 ~ 31: CPU Exceptions
+    "Division By Zero",
     "Debug",
     "Non Maskable Interrupt",
     "Breakpoint",
@@ -20,29 +23,46 @@ char *exception_messages[] = {
     "Coprocessor Fault",
     "Alignment Check",
     "Machine Check",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved",
-    "Reserved"
+    "SIMD Floating-Point Exception",
+    "Virtualization Exception",
+    "Control Protection Exception",
+    "Reserved", "Reserved", "Reserved", "Reserved",
+    "Reserved", "Reserved", "Reserved", "Reserved",
+    "Reserved", "Reserved",
+
+    // 32 ~ 47: Hardware Interrupts
+    "IRQ0: System Timer",
+    "IRQ1: Keyboard",
+    "IRQ2: Cascade (Slave PIC)",
+    "IRQ3: COM2 (Serial Port)",
+    "IRQ4: COM1 (Serial Port)",
+    "IRQ5: LPT2 (Parallel Port)",
+    "IRQ6: Floppy Disk",
+    "IRQ7: LPT1 (Parallel Port)",
+    "IRQ8: Real Time Clock",
+    "IRQ9: Redirected IRQ2",
+    "IRQ10: Reserved",
+    "IRQ11: Reserved",
+    "IRQ12: PS/2 Mouse",
+    "IRQ13: FPU / Coprocessor",
+    "IRQ14: Primary ATA",
+    "IRQ15: Secondary ATA"
 };
 
-void isr_handler(registers_t regs) {
-    kprintf("Received Interrupt: %d\n", regs.int_no);
+void isr_handler(struct registers *regs) {
+    kprintf("Received Interrupt: %d\n", regs->int_no);
     
-    if (regs.int_no < 32) {
-        kprintf("%s\n%x\n", exception_messages[regs.int_no], regs.error_code);
+    if (regs->int_no < 32) {
+        kprintf("\n[EXCEPTIONS] %s (Error Code: %d)\n", interrupt_messages[regs->int_no], regs->error_code);
 
         kprintf("System Halt");
-
         while(1);
+    } 
+    
+    if (regs->int_no >= 32 && regs->int_no <= 47) {
+
+        // 실제 하드웨어 인터럽트 실행(나중에 추가 예정)
+
+        pic_send_eoi(regs->int_no);
     }
 }
