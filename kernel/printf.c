@@ -3,8 +3,8 @@
 #include "video.h"
 
 static i32 itoa(const i32 number, char* str, u32 base) {
-    i32 i = 0;
-    u8 is_negative = 0;
+    u32 i = 0;
+    bool is_negative = false;
 
     if (number == 0) {
         str[i++] = '0';
@@ -15,7 +15,7 @@ static i32 itoa(const i32 number, char* str, u32 base) {
     u32 u_number;
 
     if (base == 10 && number < 0) {
-        is_negative = 1;
+        is_negative = true;
         str[i++] = '-';
         u_number = (u32)(-number);
     } else {
@@ -37,30 +37,34 @@ static i32 itoa(const i32 number, char* str, u32 base) {
         str[end] = temp;
         start++;
         end--;
+
+        if (end < 0) {
+            return -1;
+        }
     }
     str[i] = '\0';
 
     return i;
 }
+// 언젠가는 쓸 거임: kprintf("%5d", 10); 이런거 추가 할 때 사용할 듯
+// static i32 atoi(const char* str) {
+//     i32 number = 0;
+//     i32 sign = 1;
 
-static i32 atoi(const char* str) {
-    i32 number = 0;
-    i32 sign = 1;
+//     if (*str == '-' || *str == '+') {
+//         if (*str == '-') {
+//             sign = -1;
+//         }
+//         str++;
+//     }
 
-    if (*str == '-' || *str == '+') {
-        if (*str == '-') {
-            sign = -1;
-        }
-        str++;
-    }
+//     while ('0' <= *str && *str <= '9') {
+//         number = number * 10 + (*str - '0');
+//         str++;
+//     }
 
-    while ('0' <= *str && *str <= '9') {
-        number = number * 10 + (*str - '0');
-        str++;
-    }
-
-    return number * sign;
-}
+//     return number * sign;
+// }
 
 static i32 vsprintf(char* buf, const char *fmt, va_list args) {
     char *str = buf;

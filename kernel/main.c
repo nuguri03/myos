@@ -5,6 +5,7 @@
 
 void main() {
     init_gdt();
+    
     init_idt();
 
     clear_screen();
