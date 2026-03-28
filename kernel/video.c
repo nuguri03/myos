@@ -3,9 +3,9 @@
 #include "io.h"
 
 static u16* video_memory = (u16*)0xB8000;
-static cursor_t cursor = {0 , 0};
+static struct cursor_t cursor = {0 , 0};
 
-static void scroll() {
+static void scroll_cursor() {
     for (i32 i = 0; i < WIDTH * (HEIGHT - 1); i++) {
         video_memory[i] = video_memory[i + WIDTH];
     }
@@ -26,7 +26,7 @@ static void update_cursor() {
     outb(0x3D5, (u8)(pos & 0xFF));
 }
 
-void clear_screen() {
+void clear_vga() {
     for (i32 i = 0; i < WIDTH * HEIGHT; i++) {
         video_memory[i] = (DEFAULT_COLOR << 8) | (u8)' ';
     }
@@ -56,7 +56,7 @@ static i32 vga_putc(const char ch) {
     }
     
     if (cursor.y >= HEIGHT) {
-        scroll();
+        scroll_cursor();
     }
     
     update_cursor();

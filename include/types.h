@@ -11,4 +11,9 @@ typedef signed short        i16;
 typedef signed int          i32;
 typedef signed long long    i64;
 
+typedef u8                  bool;
+
+#define true 1
+#define false 0
+
 #endif
