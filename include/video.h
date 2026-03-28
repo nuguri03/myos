@@ -9,9 +9,9 @@
 
 typedef struct {
     u16 x, y;
-} position;
+} cursor_t;
 
 void clear_screen();
-i32 print_string(u8* buf, i32 len);
+i32 vga_print_string(const char* buf, const i32 len);
 
 #endif

@@ -1,7 +1,6 @@
 #include "string.h"
-#include "types.h"
 
-i32 strlen(u8* str) {
+i32 strlen(const char* str) {
     if (str == 0) {
         return -1;
     }
