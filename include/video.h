@@ -12,6 +12,8 @@ typedef struct {
 } position;
 
 void clear_screen();
-i32 print_string(u8* buf, i32 len);
+i32 print_string(const char* buf);
+i32 print_int(const i32 num);
+i32 print_hex(const i32 num);
 
 #endif
