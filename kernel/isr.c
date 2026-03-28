@@ -50,16 +50,16 @@ const char *interrupt_messages[] = {
 };
 
 void isr_handler(struct registers *regs) {
-    kprintf("Received Interrupt: %d\n", regs->int_no);
+    kprintf("Received Interrupt: %d\n", (i32)regs->int_no);
     
-    if (regs->int_no < 32) {
-        kprintf("\n[EXCEPTIONS] %s (Error Code: %d)\n", interrupt_messages[regs->int_no], regs->error_code);
+    if (regs->int_no < (u32)32) {
+        kprintf("\n[EXCEPTIONS] %s (Error Code: %d)\n", interrupt_messages[regs->int_no], (i32)regs->error_code);
 
         kprintf("System Halt");
         while(1);
-    } 
-    
-    if (regs->int_no >= 32 && regs->int_no <= 47) {
+    }
+
+    if (regs->int_no >= (u32)32 && regs->int_no <= (u32)47) {
 
         // 실제 하드웨어 인터럽트 실행(나중에 추가 예정)
 
