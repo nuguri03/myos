@@ -6,6 +6,7 @@
 ```
 make clean
 make
+make run
 ```
 
 ## 이상향
@@ -15,17 +16,5 @@ make
 ## 개발 단계
 
 ### 1. feat/boot
-- [x] "Hello BootLoader" 출력
-- [x] 디스크에서 커널 읽어오기
-- [x] 32비트 보호 모드 전환
-- [x] C 커널과 연결
-
 ### 2. feat/video
-- [ ] 출력 드라이버
-- [ ] 출력 기능
-
-### 3. feat/memory
-- [ ] 물리 메모리 매니저
-- [ ] 논리 메모리
-- [ ] 페이징
-- [ ] 가상 메모리
+### 3. feat/io
