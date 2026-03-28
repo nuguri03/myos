@@ -89,6 +89,4 @@ void init_idt() {
     pic_remap(0x20, 0x28);
 
     idt_load((u32)&idtp);
-
-    __asm__ volatile("sti");
 }
