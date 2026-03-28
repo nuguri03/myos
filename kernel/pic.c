@@ -35,7 +35,9 @@ void pic_remap(u8 offset1, u8 offset2) {
     outb(PIC2_DATA, 0x00);
 }
 
-void pic_send_eoi(u8 irq) {
+void pic_send_eoi(u8 int_no) {
+    u8 irq = int_no - 32;
+
     if (irq >= 8) {
         outb(PIC2_COMMAND, 0x20);
     }
