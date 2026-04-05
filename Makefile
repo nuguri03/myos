@@ -1,22 +1,45 @@
 # 1. Directories & Variables
 SRCDIRS = kernel lib
-INCDIR  = include
+INCDIR = include
 BOOTDIR = boot
 
-CC      = gcc
-LD      = ld
-ASM     = nasm
+# 환경 감지 (Termux vs 일반 Ubuntu)
+# i686-linux-gnu-gcc 존재 여부로 판단
+X86_CROSS = $(shell which i686-linux-gnu-gcc)
 
-CFLAGS  = -m32 -ffreestanding -fno-pie -fno-stack-protector -I$(INCDIR) -c
+ifneq ($(X86_CROSS),)
+    # Termux/proot-distro 환경
+    CC = i686-linux-gnu-gcc
+    LD = i686-linux-gnu-ld
+    # VNC 옵션 추가
+    QEMU_FLAGS = -vnc :1 -audiodev none,id=snd0
+else
+    # 일반 Ubuntu 환경
+    CC = gcc
+    LD = ld
+    # 일반 환경은 GUI 바로 띄움
+    QEMU_FLAGS = 
+endif
+
+ASM = nasm
+# 32비트 커널이므로 i386 에뮬레이터가 더 적합함
+QEMU = qemu-system-i386
+
+# 컴파일 플래그 정리 (-m32는 ARCH_FLAGS에 있으므로 CC에서 제거)
+ARCH_FLAGS = -m32 -fno-pic -fno-pie
+FREESTAND_FLAGS = -ffreestanding -nostdlib -fno-builtin -fno-stack-protector
+# 최적화: -MMD -MP 추가 (헤더 파일 수정 시 자동으로 다시 빌드되게 함)
+DEBUG_FLAGS = -g -I$(INCDIR) -MMD -MP
+
+CFLAGS = $(ARCH_FLAGS) $(FREESTAND_FLAGS) $(DEBUG_FLAGS) -c
 LDFLAGS = -m elf_i386 -Ttext 0x8000 -e setup_start --oformat binary
 
 # 2. Source & Object Files
-C_SRCS   = $(foreach dir, $(SRCDIRS), $(wildcard $(dir)/*.c))
+C_SRCS = $(foreach dir, $(SRCDIRS), $(wildcard $(dir)/*.c))
 ASM_SRCS = $(foreach dir, $(SRCDIRS), $(wildcard $(dir)/*.asm))
 
-C_OBJS   = $(notdir $(C_SRCS:.c=.o))
+C_OBJS = $(notdir $(C_SRCS:.c=.o))
 ASM_OBJS = $(notdir $(ASM_SRCS:.asm=.o))
-
 KERNEL_OBJS = $(C_OBJS) $(ASM_OBJS)
 
 vpath %.c $(SRCDIRS)
@@ -29,7 +52,7 @@ vpath %.asm $(SRCDIRS)
 all: disk.img
 
 run: disk.img
-	qemu-system-x86_64 -drive format=raw,file=$<
+	$(QEMU) -drive format=raw,file=$< $(QEMU_FLAGS)
 
 disk.img: boot.bin kernel.bin
 	cat $^ > $@
@@ -54,4 +77,7 @@ setup.o: $(BOOTDIR)/setup.asm
 
 # 6. Clean
 clean:
-	rm -rf *.bin *.o *.img
+	rm -rf *.bin *.o *.img *.d
+
+# 7. Dependencies (헤더 파일 자동 추적)
+-include $(C_OBJS:.o=.d)
