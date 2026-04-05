@@ -4,3 +4,4 @@
 *.img
 .vscode/
 learning/
+compile_flags.txt
