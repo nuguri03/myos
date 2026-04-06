@@ -121,7 +121,11 @@ i32 kprintf(const char* fmt, ...) {
 
     va_end(args);
 
+    if (written < 0) {
+        return written;
+    }
+
     vga_print_string(buf, written);
 
-    return 1;
+    return written;
 }
