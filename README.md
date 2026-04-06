@@ -13,9 +13,17 @@ make run
 ![alt text](docs/linux_kernel_diagram.png)
 > 최대한 되는대로 다 구현해보는게 목표
 
-## 개발 단계
+## 개발 과정
 
-### 1. feat/boot
-### 2. feat/video
-### 3. feat/io
-### 4. feat/
+- [x] **1. Booting & Basic Output**
+  - Bootloader setup
+  - Basic Video (VGA Text Mode)
+
+- [x] **2. Low-Level Architecture**
+  - I/O port communication (`inb`, `outb`, `io_wait`)
+  - GDT (Global Descriptor Table) initialization
+
+- [x] **3. Interrupt Management**
+  - IDT (Interrupt Descriptor Table) setup
+  - ISR (Interrupt Service Routines) & Assembly Wrappers
+  - 8259A PIC (Programmable Interrupt Controller) Remapping

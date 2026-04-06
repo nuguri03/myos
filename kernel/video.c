@@ -1,5 +1,4 @@
 #include "video.h"
-#include "string.h"
 #include "io.h"
 
 static u16* video_memory = (u16*)0xB8000;

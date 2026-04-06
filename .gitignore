@@ -1,6 +1,8 @@
 *.o
+*.d
 *.bin
 *.iso
 *.img
 .vscode/
 learning/
+compile_flags.txt

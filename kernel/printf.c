@@ -4,7 +4,7 @@
 
 static i32 itoa(const i32 number, char* str, u32 base) {
     u32 i = 0;
-    bool is_negative = false;
+    _Bool is_negative = false;
 
     if (number == 0) {
         str[i++] = '0';
@@ -121,5 +121,11 @@ i32 kprintf(const char* fmt, ...) {
 
     va_end(args);
 
+    if (written < 0) {
+        return written;
+    }
+
     vga_print_string(buf, written);
+
+    return written;
 }
