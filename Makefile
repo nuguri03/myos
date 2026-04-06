@@ -5,7 +5,7 @@ BOOTDIR = boot
 
 # 환경 감지 (Termux vs 일반 Ubuntu)
 # i686-linux-gnu-gcc 존재 여부로 판단
-X86_CROSS = $(shell which i686-linux-gnu-gcc)
+X86_CROSS = $(shell command -v i686-linux-gnu-gcc 2>/dev/null)
 
 ifneq ($(X86_CROSS),)
     # Termux/proot-distro 환경
