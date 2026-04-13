@@ -3,7 +3,7 @@
 struct gdt_entry gdt[3];
 struct gdt_ptr gp;
 
-static void gdt_flush(u32 gdt_ptr_address) {
+static void gdt_flush(u32 gdt_ptr_addr) {
     __asm__ __volatile__(
         "lgdt (%0)\n\t"      
         "mov $0x10, %%ax\n\t"
@@ -17,13 +17,13 @@ static void gdt_flush(u32 gdt_ptr_address) {
         "lret\n\t"        
         "1:\n\t"          
         :
-        : "r"(gdt_ptr_address)
+        : "r"(gdt_ptr_addr)
         : "eax", "memory"  
     );
 }
 
 /* base(32비트)와 limit(20비트)를 Intel GDT 스펙에 맞게 쪼개서 저장 */
-static void gdt_set_gate(i32 num, u32 base, u32 limit, u8 access, u8 gran) {
+static void gdt_set_gate(i32 num, u32 base, u32 limit, u8 access, u8 granularity) {
     // base를 low(16비트), middle(8비트), high(8비트)로 분해
     gdt[num].base_low    = base & 0xFFFF;
     gdt[num].base_middle = (base >> 16) & 0xFF;
@@ -34,7 +34,7 @@ static void gdt_set_gate(i32 num, u32 base, u32 limit, u8 access, u8 gran) {
     gdt[num].granularity = (limit >> 16) & 0x0F;
 
     // granularity 상위 4비트에 플래그(G, D/B, L, AVL) 합성
-    gdt[num].granularity |= gran & 0xF0;
+    gdt[num].granularity |= granularity & 0xF0;
 
     gdt[num].access = access;
 }

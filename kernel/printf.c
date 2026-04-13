@@ -5,7 +5,7 @@
 /* 정수를 문자열로 변경하는 함수 */
 static i32 itoa(const i32 number, char* str, u32 base) {
     u32 i = 0;
-    _Bool is_negative = false;
+    bool is_negative = false;
 
     if (number == 0) {
         str[i++] = '0';
@@ -43,6 +43,7 @@ static i32 itoa(const i32 number, char* str, u32 base) {
 
     return i;
 }
+
 // 언젠가는 쓸 거임: kprintf("%5d", 10); 이런거 추가 할 때 사용할 듯
 // static i32 atoi(const char* str) {
 //     i32 number = 0;
@@ -64,7 +65,7 @@ static i32 itoa(const i32 number, char* str, u32 base) {
 // }
 
 /* 포맷 문자열 파싱하는 함수 */
-static i32 vsprintf(char* buf, const char *fmt, va_list args) {
+static ssize_t vsprintf(char* buf, const char *fmt, va_list args) {
     char *str = buf;
     const char* s;
 
@@ -112,10 +113,10 @@ static i32 vsprintf(char* buf, const char *fmt, va_list args) {
     return str - buf;
 }
 
-i32 kprintf(const char* fmt, ...) {
+ssize_t kprintf(const char* fmt, ...) {
     char buf[1024];
     va_list args;
-    i32 written;
+    ssize_t written;
 
     va_start(args, fmt);
 

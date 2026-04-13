@@ -3,6 +3,6 @@
 
 #include "types.h"
 
-i32 strlen(const char* str);
+ssize_t strlen(const char* str);
 
 #endif
