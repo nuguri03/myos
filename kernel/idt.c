@@ -1,9 +1,13 @@
+/* IDT = Interrupt Descripter Table
+    인터럽트 번호 -> 핸들러 함수 주소를 매핑하는 테이블 */
+
 #include "idt.h"
 #include "pic.h"
 
 struct idt_entry idt[256];
 struct idt_ptr idtp;
 
+// TODO: 함수 포인터 배열로 깔끔히 정리하기
 extern void isr0();  extern void isr1();  extern void isr2();  extern void isr3();
 extern void isr4();  extern void isr5();  extern void isr6();  extern void isr7();
 extern void isr8();  extern void isr9();  extern void isr10(); extern void isr11();
@@ -25,18 +29,20 @@ static void idt_set_gate(u8 num, u32 base, u16 sel, u8 flags) {
     idt[num].flags = flags;
 }
 
-static void idt_load(u32 idt_ptr_addr) {
-    __asm__ __volatile__("lidt (%0)" : : "r" (idt_ptr_addr));
+static void idt_load(u32 idt_ptr) {
+    __asm__ __volatile__("lidt (%0)" : : "r" (idt_ptr));
 }
 
 void init_idt() {
     idtp.limit = (sizeof(struct idt_entry) * 256) - 1;
     idtp.base = (u32)&idt;
 
+    // TODO: idt가 전역 변수임으로 삭제해도 됨.
     for (i32 i = 0; i < 256; i++) {
         idt_set_gate(i, 0, 0, 0);
     }
     
+    // 0x08 = code, 0x8E = 32비트 interrupt gate
     idt_set_gate(0, (u32)isr0, 0x08, 0x8E);
     idt_set_gate(1, (u32)isr1, 0x08, 0x8E);
     idt_set_gate(2, (u32)isr2, 0x08, 0x8E);
