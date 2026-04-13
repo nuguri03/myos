@@ -1,11 +1,12 @@
 [BITS 16]
 
-; TODO: 삭제해야 함
+; 링커의 엔트리 포인트
 global setup_start
+
 extern main
 
 ; ================================================
-; GDT(Global Descripter Table)  
+; GDT(Global Descriptor Table)  
 ; 메모리 구역마다 권한과 크기를 정함으로써 
 ; 메모리를 보호하고, 32비트(4GB) 전체를 사용하기 위한 테이블
 ; ================================================
@@ -21,7 +22,7 @@ setup_start:
 
 
     ; cr0 = 0 : 16bit real mode
-    ; cr0 = 1 ; 32bit protection mode
+    ; cr0.pe = 1 ; 32bit protected mode
     mov eax, cr0
     or eax, 0x01
     mov cr0, eax
@@ -41,7 +42,7 @@ setup_start:
 ;   Flags (4bit)        : 크기 단위, 모드 등
 ; ===========================================
 gdt_start:
-    ; 1. NULL desciptor:
+    ; 1. NULL Descriptor:
     ; GDT의 시작은 8바이트의 0으로 시작해야 함.
     ; 잘못된 세그먼트 참조를 방지
     dd 0x00000000, 0x00000000

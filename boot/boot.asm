@@ -1,7 +1,7 @@
 [ORG 0x7c00]    ; BIOS가 이 코드를 0x7c00에 적재할 것이므로, 컴파일러에게 이 곳을 기준으로 주소를 계산하라고 알림
 [BITS 16]       ; 아래의 코드는 16비트 체제이다.
 
-; TODO: maigc numbers 리팩토링
+; TODO: magic numbers 리팩토링
 ; ============================================================================
 ; magic numbers & settings
 ; 0x0800        = 세그먼트 주소 (커널/setup.asm이 로드될 위치) 
@@ -23,7 +23,7 @@ start:
 
     ; 하드디스크에 저장된 데이터를 메모리로 복사
     mov ah, 0x02                ; 디스크 섹터를 읽어라는 명령
-    mov al, KERNEL_SECTORS      ; KERNEL_SECTOR = 커널의 크기(Makefile에 정의되어 있음)
+    mov al, KERNEL_SECTORS      ; KERNEL_SECTORS = 커널의 크기(Makefile에 정의되어 있음)
     mov ch, 0                   ; 디스크의 0번째 트랙부터
     mov cl, 2                   ; 2번째 섹터부터(1번 섹터는 MBR으로 pass)
     mov dh, 0                   ; 0번째 헤드부터
@@ -31,7 +31,7 @@ start:
     ; 정리하자면 첫번째 HDD의 0번 실린더의 2번째 섹터의 0번째 헤드부터 KERNEL_SECTORS 크기만큼 디스크를 읽어라
 
 
-    int 0x13                    ; BIOS 디스크 서비스 호출(디스크에서 읽어롸 ES:BX 메모리에 적재)
+    int 0x13                    ; BIOS 디스크 서비스 호출(디스크에서 읽어라 ES:BX 메모리에 적재)
     jc disk_error               ; 플래그 레지스터 중 Carry Flag가 1(Error) 이면 disk_error로 점프
 
     jmp 0x0800:0000             ; 0x8000번지로 점프

@@ -7,7 +7,7 @@
 static inline void outb(u16 port, u8 data) {
     // al 레지스터 값을 port번 I/O 주소로 전송
     // outb al, dx 
-    // outb al, imm8 (imm8 < 255)
+    // outb al, imm8 (imm8 <= 0xFF)
     // "a" = eax, ax, al 레지스터에 넣어라
     // "dN" = 0~0xFF 범위면 즉시값(imm8) 사용 가능
     __asm__ __volatile__ ("outb %0, %1": : "a"(data), "dN"(port));

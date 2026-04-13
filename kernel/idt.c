@@ -1,4 +1,4 @@
-/* IDT = Interrupt Descripter Table
+/* IDT = Interrupt Descriptor Table
     인터럽트 번호 -> 핸들러 함수 주소를 매핑하는 테이블 */
 
 #include "idt.h"
