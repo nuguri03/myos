@@ -1,8 +1,9 @@
 [BITS 16]
 
-; 링커의 엔트리 포인트
-global setup_start
+%define KERNEL_CODE_SEG 0x08
+%define KERNEL_DATA_SEG 0x10
 
+global setup_start ; 링커의 엔트리 포인트
 extern main
 
 ; ================================================
@@ -30,10 +31,8 @@ setup_start:
     ; dword(double word) = 32bit
     ; CS 레지스터를 0x08(코드 세그먼트)로 변경하고, 즉 GDT의 1번 규칙을 사용한다.
     ; 32비트 주소로 점프하면서, CPU 파이프라인에 남아있던 16비트 쓰레기 명령어들을 모두 비움.
-    jmp dword 0x08:protected_mode_entry
+    jmp dword KERNEL_CODE_SEG:protected_mode_entry
 
-
-; TODO: GDT Entry의 구조를 읽기 쉽게 리팩토링해야함
 ; ===========================================
 ; GDT entry 
 ;   Base (32bit)        : 세그먼트의 시작 주소
@@ -42,24 +41,15 @@ setup_start:
 ;   Flags (4bit)        : 크기 단위, 모드 등
 ; ===========================================
 gdt_start:
-    ; 1. NULL Descriptor:
-    ; GDT의 시작은 8바이트의 0으로 시작해야 함.
-    ; 잘못된 세그먼트 참조를 방지
+    ; NULL Descriptor
     dd 0x00000000, 0x00000000
 
-    ; 2. Code Segment Descriptor:
-    ; Limit (0-15bit) = 0xFFFF
-    ; Base (0-31bit) = 0x00000000 (메모리 시작점부터)
-    ; Access Byte (0x9A): P=1, DPL=0, S=1, Type=Code (읽기/실행 가능)
-    ; Flags (0xC): G=1 (4KB 단위), D=1 (32비트 모드)
-    ; 0번지부터 4GB 전체를 아우르는 '실행 가능' 코드 영역 정의
+    ; Code Segment: Base=0x0, Limit=0xFFFFF, Access=0x9A, Flags=0xC
+    ;   → 0번지부터 4GB, 실행 가능, 커널 권한(Ring 0), 32비트
     dd 0x0000FFFF, 0x00CF9A00
 
-    ; 3. Data Segment Descriptor:
-    ; Limit (0-15bit) = 0xFFFF
-    ; Access Byte (0x92): P=1, DPL=0, S=1, Type=Data (읽기/쓰기 가능)
-    ; Flags (0xC): G=1 (4KB 단위), D=1 (32비트 모드)
-    ; 0번지부터 4GB 전체를 아우르는 '읽기/쓰기 가능' 데이터/스택 영역 정의
+    ; Data Segment: Base=0x0, Limit=0xFFFFF, Access=0x92, Flags=0xC
+    ;   → 0번지부터 4GB, 읽기/쓰기 가능, 커널 권한(Ring 0), 32비트
     dd 0x0000FFFF, 0x00CF9200
 gdt_end:
 
@@ -68,12 +58,11 @@ gdtr:
     dw gdt_end - gdt_start - 1  ; limit
     dd gdt_start                ; base address
 
-
 [BITS 32]
 
 protected_mode_entry:
     ; 세그먼트 레지스터들을 0x10(데이터 세그먼트), 즉 GDT의 2번 규칙을 적용하게 함
-    mov ax, 0x10
+    mov ax, KERNEL_DATA_SEG
     mov ds, ax
     mov es, ax
     mov fs, ax

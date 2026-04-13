@@ -56,14 +56,14 @@ void isr_handler(struct registers *regs) {
     
     // CPU 예외
     if (regs->int_no < (u32)32) {
-        kprintf("\n[EXCEPTIONS] %s (Error Code: %d)\n", interrupt_messages[regs->int_no], (i32)regs->error_code);
+        kprintf("\n[EXCEPTIONS] %s (Error Code: %d)\n", interrupt_messages[regs->int_no], regs->error_code);
 
         kprintf("System Halt");
         while(1);
     }
 
     // 하드웨어 IRQ(Interrupt ReQuest)
-    if (regs->int_no >= (u32)32 && regs->int_no <= (u32)47) {
+    if (regs->int_no >= 32 && regs->int_no <= 47) {
 
         // TODO: 실제 하드웨어 인터럽트 함수 만들기
 

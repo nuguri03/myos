@@ -5,7 +5,7 @@
 static u16* video_memory = (u16*)0xB8000;
 static struct cursor_t cursor = {0 , 0};
 
-/* 아래 칸에 있는 문자를 위로 옮기고, 밑으로 내려간 만큼 빈 공간을 검은색으로 채움 */
+/* 아래 칸에 있는 문자를 위로 옮기고, 밑으로 내려간 만큼 빈 공간을 검은색으로 채우는 함수 */
 static void scroll_cursor() {
     // 아래 칸에 있는 문자를 위로 옮김
     for (i32 i = 0; i < WIDTH * (HEIGHT - 1); i++) {
@@ -15,7 +15,7 @@ static void scroll_cursor() {
     // 밑으로 내려간 만큼 빈 공간을 검은색으로 채움
     for (i32 i = WIDTH * (HEIGHT - 1); i < WIDTH * HEIGHT; i++) {
         // 상위 1바이트(8비트) = 색상, 하위 1바이트(8비트) = 문자
-        video_memory[i] = (DEFAULT_COLOR << 8) | (u8)' ';
+        video_memory[i] = (u16)((DEFAULT_COLOR << 8) | ' ');
     }
 
     // 스크롤 후 커서는 새로 생긴 빈 마지막 줄에 있어야 함.
@@ -40,19 +40,19 @@ static void update_cursor() {
 /* 모든 칸을 검은색으로 채우는 함수 */
 void clear_vga() {
     for (i32 i = 0; i < WIDTH * HEIGHT; i++) {
-        video_memory[i] = (DEFAULT_COLOR << 8) | (u8)' ';
+        video_memory[i] = (u16)((DEFAULT_COLOR << 8) | ' ');
     }
     cursor.x = 0; cursor.y = 0;
     update_cursor();
 }
 
-/* 현재 위치의 주소를 받는 함수 */
+/* {x, y}의 주소를 받는 함수 */
 static inline u32 get_offset(const u16 x, const u16 y) {
     return y * WIDTH + x;
 }
 
 /* 문자 하나를 vga에 print하고, cursor를 업데이트하는 함수 */
-static i32 vga_putc(const char ch) {
+static ssize_t vga_putc(const char ch) {
     if (ch == '\n') {
         cursor.x = 0;
         cursor.y++;
@@ -60,7 +60,7 @@ static i32 vga_putc(const char ch) {
         cursor.x = 0;
     } else {
         u32 offset = get_offset(cursor.x, cursor.y);
-        video_memory[offset] = (DEFAULT_COLOR << 8) | (u8)ch;
+        video_memory[offset] = (u16)((DEFAULT_COLOR << 8) | ch);
         cursor.x++;
     }
 
@@ -79,12 +79,15 @@ static i32 vga_putc(const char ch) {
 }
 
 /* vga_putc를 활용하여 문자열을 출력하는 함수 */
-i32 vga_print_string(const char* buf, const i32 len) {
-    if (len <= 0) {
+ssize_t vga_print_string(const char* buf, const ssize_t len) {
+    if (buf == NULL || len < 0) {
         return -1;
     }
+    if (len == 0) {
+        return 0;
+    }
     
-    i32 i;
+    ssize_t i;
     for (i = 0; i < len; i++) {
         vga_putc(buf[i]);
     }
