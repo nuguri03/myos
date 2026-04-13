@@ -52,11 +52,11 @@ const char *interrupt_messages[] = {
 };
 
 void isr_handler(struct registers *regs) {
-    kprintf("Received Interrupt: %d\n", (i32)regs->int_no);
+    kprintf("Received Interrupt: %u\n", regs->int_no);
     
     // CPU 예외
-    if (regs->int_no < (u32)32) {
-        kprintf("\n[EXCEPTIONS] %s (Error Code: %d)\n", interrupt_messages[regs->int_no], regs->error_code);
+    if (regs->int_no < 32) {
+        kprintf("\n[EXCEPTIONS] %s (Error Code: %u)\n", interrupt_messages[regs->int_no], regs->error_code);
 
         kprintf("System Halt");
         while(1);

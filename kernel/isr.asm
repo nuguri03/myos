@@ -99,7 +99,7 @@ isr_common_stub:
 isr_default:
     cli
     push byte 0
-    push byte 0xFF
+    push dword 0xFF
     jmp isr_common_stub
 
 global isr_table
