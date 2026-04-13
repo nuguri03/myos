@@ -94,6 +94,10 @@ static ssize_t vsprintf(char* buf, const char *fmt, va_list args) {
                 str += itoa(va_arg(args, i32), str, 10);
                 break;
 
+            case 'u':
+                str += itoa(va_arg(args, u32), str, 10);
+                break;
+
             case 'x':
                 str += itoa(va_arg(args, i32), str, 16);
                 break;
