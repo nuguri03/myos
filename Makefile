@@ -1,7 +1,10 @@
 # 1. Directories & Variables
-SRCDIRS = kernel lib
-INCDIR = include
+SRCDIRS = kernel
+INCDIR  = include
 BOOTDIR = boot
+OBJDIR  = build
+C_OBJDIR   = $(OBJDIR)/c
+ASM_OBJDIR = $(OBJDIR)/asm
 
 # 환경 감지 (Termux vs 일반 Ubuntu)
 # i686-linux-gnu-gcc 존재 여부로 판단
@@ -18,31 +21,35 @@ else
     CC = gcc
     LD = ld
     # 일반 환경은 GUI 바로 띄움
-    QEMU_FLAGS = 
+    QEMU_FLAGS =
 endif
 
-ASM = nasm
+ASM  = nasm
 # 32비트 커널이므로 i386 에뮬레이터가 더 적합함
 QEMU = qemu-system-i386
 
-# 컴파일 플래그 정리 (-m32는 ARCH_FLAGS에 있으므로 CC에서 제거)
-ARCH_FLAGS = -m32 -fno-pic -fno-pie
+ARCH_FLAGS      = -m32 -fno-pic -fno-pie
 FREESTAND_FLAGS = -ffreestanding -nostdlib -fno-builtin -fno-stack-protector
-# 최적화: -MMD -MP 추가 (헤더 파일 수정 시 자동으로 다시 빌드되게 함)
-DEBUG_FLAGS = -g -I$(INCDIR) -MMD -MP
+# -MMD -MP: 헤더 파일 수정 시 자동으로 다시 빌드되게 함
+DEBUG_FLAGS     = -g -I$(INCDIR) -MMD -MP
 
-CFLAGS = $(ARCH_FLAGS) $(FREESTAND_FLAGS) $(DEBUG_FLAGS) -c
+CFLAGS  = $(ARCH_FLAGS) $(FREESTAND_FLAGS) $(DEBUG_FLAGS) -c
 LDFLAGS = -m elf_i386 -Ttext 0x8000 -e setup_start --oformat binary
 
 # 2. Source & Object Files
-C_SRCS = $(foreach dir, $(SRCDIRS), $(wildcard $(dir)/*.c))
+C_SRCS   = $(foreach dir, $(SRCDIRS), $(wildcard $(dir)/*.c))
 ASM_SRCS = $(foreach dir, $(SRCDIRS), $(wildcard $(dir)/*.asm))
 
-C_OBJS = $(notdir $(C_SRCS:.c=.o))
-ASM_OBJS = $(notdir $(ASM_SRCS:.asm=.o))
+# kernel/isr.c   → build/c/isr.o
+# kernel/isr.asm → build/asm/isr.o
+C_OBJS   = $(patsubst %.c,   $(C_OBJDIR)/%.o,   $(notdir $(C_SRCS)))
+ASM_OBJS = $(patsubst %.asm, $(ASM_OBJDIR)/%.o, $(notdir $(ASM_SRCS)))
 KERNEL_OBJS = $(C_OBJS) $(ASM_OBJS)
 
-vpath %.c $(SRCDIRS)
+# .d 파일은 build/c/ 에 생성됨
+DEPS = $(C_OBJS:.o=.d)
+
+vpath %.c   $(SRCDIRS)
 vpath %.asm $(SRCDIRS)
 
 # 3. Phony Targets
@@ -57,7 +64,7 @@ run: disk.img
 disk.img: boot.bin kernel.bin
 	cat $^ > $@
 
-kernel.bin: setup.o $(KERNEL_OBJS)
+kernel.bin: $(OBJDIR)/setup.o $(KERNEL_OBJS)
 	$(LD) $(LDFLAGS) $^ -o $@
 
 # 5. Compile Rules
@@ -66,18 +73,21 @@ boot.bin: $(BOOTDIR)/boot.asm kernel.bin
 	SECTORS=$$(( (KERNEL_SIZE + 511) / 512 )); \
 	$(ASM) -f bin $< -D KERNEL_SECTORS=$$SECTORS -o $@
 
-setup.o: $(BOOTDIR)/setup.asm
+$(OBJDIR)/setup.o: $(BOOTDIR)/setup.asm
+	@mkdir -p $(dir $@)
 	$(ASM) -f elf32 $< -o $@
 
-%.o: %.c
+$(C_OBJDIR)/%.o: %.c
+	@mkdir -p $(C_OBJDIR)
 	$(CC) $(CFLAGS) $< -o $@
 
-%.o: %.asm
+$(ASM_OBJDIR)/%.o: %.asm
+	@mkdir -p $(ASM_OBJDIR)
 	$(ASM) -f elf32 $< -o $@
 
 # 6. Clean
 clean:
-	rm -rf *.bin *.o *.img *.d
+	rm -rf $(OBJDIR) *.bin *.img
 
 # 7. Dependencies (헤더 파일 자동 추적)
--include $(C_OBJS:.o=.d)
+-include $(DEPS)
