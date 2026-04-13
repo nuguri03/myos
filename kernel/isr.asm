@@ -5,17 +5,18 @@ extern isr_handler
 %macro ISR_NOERRCODE 1
 global isr%1
 isr%1:
-    cli
-    push byte 0
-    push byte %1
+    cli                     ; 인터럽트 중첩 방지
+    push byte 0             ; 에러 코드가 없는 예외는 0으로 채워서 스택 구조를 통일시킴
+    push byte %1            ; 인터럽트 번호 push
     jmp isr_common_stub
 %endmacro
 
 %macro ISR_ERRCODE 1
 global isr%1
 isr%1:
-    cli
-    push byte %1
+    cli                     ; 인터럽트 중첩 방지
+                            ; 에러 코드를 CPU가 자동으로 push했음으로 생략
+    push byte %1            ; 인터럽트 번호 push
     jmp isr_common_stub
 %endmacro
 
@@ -68,20 +69,21 @@ ISR_NOERRCODE 45
 ISR_NOERRCODE 46
 ISR_NOERRCODE 47
 
+; 문맥 저장 및 핸들러 호출
 isr_common_stub:
-    pusha
-    xor eax, eax
+    pusha           ; 범용 + 스택 + 인덱스 레지스터 백업
+    xor eax, eax    
     mov ax, ds
-    push eax
-    mov ax, 0x10
-    mov ds, ax
+    push eax        ; ds 레지스터 백업
+    mov ax, 0x10    ; 커널 데이터 세그먼트로 전환(인터럽트 발생 시점이 유저 세그먼트 일 수도 있음)
+    mov ds, ax  
     mov es, ax
     mov fs, ax
     mov gs, ax
 
-    push esp
+    push esp        ; 현재 스택 포인터 = struct *registers 로 전달
     call isr_handler
-    add esp, 4
+    add esp, 4      ; pop
 
     pop eax
     mov ds, ax
@@ -89,7 +91,7 @@ isr_common_stub:
     mov fs, ax
     mov gs, ax
 
-    popa
-    add esp, 8
+    popa            ; pusha로 저장한 레지스터 모두 복원
+    add esp, 8      ; int_no + error_code (각 4바이트) pop
 
-    iret
+    iret            ; 스택에서 EIP, CS, EFLAGS 복원

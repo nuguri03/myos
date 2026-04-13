@@ -2,6 +2,7 @@
 #include "stdarg.h"
 #include "video.h"
 
+/* 정수를 문자열로 변경하는 함수 */
 static i32 itoa(const i32 number, char* str, u32 base) {
     u32 i = 0;
     _Bool is_negative = false;
@@ -62,6 +63,7 @@ static i32 itoa(const i32 number, char* str, u32 base) {
 //     return number * sign;
 // }
 
+/* 포맷 문자열 파싱하는 함수 */
 static i32 vsprintf(char* buf, const char *fmt, va_list args) {
     char *str = buf;
     const char* s;

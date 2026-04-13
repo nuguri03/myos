@@ -4,11 +4,11 @@
 #include "types.h"
 
 struct idt_entry {
-    u16 base_low;
-    u16 sel;     
-    u8 always0;  
-    u8 flags;    
-    u16 base_high;
+    u16 base_low;               // 핸들러 주소[15: 0]
+    u16 sel;                    // GDT 코드 세그먼트 셀렉터
+    u8 always0;                 // 항상 0
+    u8 flags;                   // P, DPL, 타입
+    u16 base_high;              // 핸들러 주소 [31:16]
 } __attribute__((packed));
 
 struct idt_ptr {

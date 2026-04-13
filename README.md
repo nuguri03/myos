@@ -25,5 +25,5 @@ make run
 
 - [x] **3. Interrupt Management**
   - IDT (Interrupt Descriptor Table) setup
-  - ISR (Interrupt Service Routines) & Assembly Wrappers
+  - ISR (Interrupt Service Routines)
   - 8259A PIC (Programmable Interrupt Controller) Remapping

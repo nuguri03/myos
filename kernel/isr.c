@@ -1,3 +1,5 @@
+/* ISR = Interrupt Service Routine */
+
 #include "isr.h"
 #include "pic.h"
 #include "printf.h"
@@ -52,6 +54,7 @@ const char *interrupt_messages[] = {
 void isr_handler(struct registers *regs) {
     kprintf("Received Interrupt: %d\n", (i32)regs->int_no);
     
+    // CPU 예외
     if (regs->int_no < (u32)32) {
         kprintf("\n[EXCEPTIONS] %s (Error Code: %d)\n", interrupt_messages[regs->int_no], (i32)regs->error_code);
 
@@ -59,9 +62,10 @@ void isr_handler(struct registers *regs) {
         while(1);
     }
 
+    // 하드웨어 IRQ(Interrupt ReQuest)
     if (regs->int_no >= (u32)32 && regs->int_no <= (u32)47) {
 
-        // 실제 하드웨어 인터럽트 실행(나중에 추가 예정)
+        // TODO: 실제 하드웨어 인터럽트 함수 만들기
 
         pic_send_eoi(regs->int_no);
     }
