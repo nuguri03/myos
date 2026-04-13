@@ -3,7 +3,9 @@
 %define KERNEL_SEGMENT  0x0800 
 %define KERNEL_OFFSET   0x0000
 
-[ORG BOOTLOADER_ADDR]    ; BIOS가 이 코드를 에 적재할 것이므로, 컴파일러에게 이 곳을 기준으로 주소를 계산하라고 알림
+; BIOS가 이 코드를 BOOTLOADER_ADDR(0x7c00)에 적재할 것이므로,
+; 컴파일러에게 이 곳을 기준으로 주소를 계산하라고 알림
+[ORG BOOTLOADER_ADDR]
 [BITS 16]             ; 아래의 코드는 16비트 체제이다.
 
 ; BIOS CONSTANTS    
