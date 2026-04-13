@@ -80,8 +80,11 @@ static ssize_t vga_putc(const char ch) {
 
 /* vga_putc를 활용하여 문자열을 출력하는 함수 */
 ssize_t vga_print_string(const char* buf, const ssize_t len) {
-    if (buf == NULL || len == 0) {
+    if (buf == NULL || len < 0) {
         return -1;
+    }
+    if (len == 0) {
+        return 0;
     }
     
     ssize_t i;
