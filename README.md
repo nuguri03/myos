@@ -12,7 +12,7 @@ make run
 ## 이상향
 ![alt text](docs/linux_kernel_diagram.png)
 > 최대한 되는대로 다 구현해보는게 목표
-## 개발 과정
+
 ## 개발 과정
 
 - [x] **1. Booting & Basic Output**
