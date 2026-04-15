@@ -74,16 +74,17 @@ static bool shift_pressed = false;
 
 /* 버퍼에 문자 1개를 씀 (IRQ1 핸들러에서 호출)
  *
- * 버퍼가 가득 찼을 때 (tail이 한 바퀴 돌아 head에 도달):
- * head를 앞으로 밀어 가장 오래된 입력을 버리고 공간을 확보함.
+ * 버퍼가 가득 차면 새 입력을 버림.
+ * 오래된 입력을 버리려면 IRQ와 메인 루프가 동시에 head를 건드리게 되어
+ * race condition이 발생하기 때문.
  */
 static void kb_buffer_push(char c) {
-    kb_buffer[kb_buf_tail] = c;
-    kb_buf_tail = (kb_buf_tail + 1) % KB_BUFFER_SIZE;
+    u32 next_tail = (kb_buf_tail + 1) % KB_BUFFER_SIZE;
 
-    if (kb_buf_tail == kb_buf_head) {
-        kb_buf_head = (kb_buf_head + 1) % KB_BUFFER_SIZE;
-    }
+    if (next_tail == kb_buf_head) return;
+
+    kb_buffer[kb_buf_tail] = c;
+    kb_buf_tail = next_tail;
 }
 
 /* 버퍼에서 문자 1개를 꺼냄 (커널에서 호출)
