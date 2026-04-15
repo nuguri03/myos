@@ -4,33 +4,35 @@
 #include "pic.h"
 #include "printf.h"
 
+static irq_handler_t irq_handlers[16];
+
 const char *interrupt_messages[] = {
     // 0 ~ 31: CPU Exceptions
-    "Division By Zero",
-    "Debug",
-    "Non Maskable Interrupt",
-    "Breakpoint",
-    "Into Detected Overflow",
-    "Out of Bounds",
-    "Invalid Opcode",
-    "No Coprocessor",
-    "Double Fault",
-    "Coprocessor Segment Overrun",
-    "Bad TSS",
-    "Segment Not Present",
-    "Stack Fault",
-    "General Protection Fault",
-    "Page Fault",
-    "Unknown Interrupt",
-    "Coprocessor Fault",
-    "Alignment Check",
-    "Machine Check",
-    "SIMD Floating-Point Exception",
-    "Virtualization Exception",
-    "Control Protection Exception",
+    "Division By Zero",              // 0  #DE
+    "Debug",                         // 1  #DB
+    "Non Maskable Interrupt",        // 2  NMI
+    "Breakpoint",                    // 3  #BP
+    "Overflow",                      // 4  #OF
+    "Bound Range Exceeded",          // 5  #BR
+    "Invalid Opcode",                // 6  #UD
+    "Device Not Available",          // 7  #NM
+    "Double Fault",                  // 8  #DF
+    "Coprocessor Segment Overrun",   // 9  (구형)
+    "Invalid TSS",                   // 10 #TS
+    "Segment Not Present",           // 11 #NP
+    "Stack Fault",                   // 12 #SS
+    "General Protection Fault",      // 13 #GP
+    "Page Fault",                    // 14 #PF
+    "Reserved",                      // 15
+    "x87 Floating-Point Exception",  // 16 #MF
+    "Alignment Check",               // 17 #AC
+    "Machine Check",                 // 18 #MC
+    "SIMD Floating-Point Exception", // 19 #XM
+    "Virtualization Exception",      // 20 #VE
+    "Reserved",                      // 21
     "Reserved", "Reserved", "Reserved", "Reserved",
     "Reserved", "Reserved", "Reserved", "Reserved",
-    "Reserved", "Reserved",
+    "Reserved", "Reserved",          // 22 ~ 31
 
     // 32 ~ 47: Hardware Interrupts
     "IRQ0: System Timer",
@@ -51,12 +53,16 @@ const char *interrupt_messages[] = {
     "IRQ15: Secondary ATA"
 };
 
+void register_irq_handler(u8 irq, irq_handler_t handler) {
+    irq_handlers[irq] = handler;
+}
+
 void isr_handler(struct registers *regs) {
-    kprintf("Received Interrupt: %u\n", regs->int_no);
-    
     // CPU 예외
     if (regs->int_no < 32) {
-        kprintf("\n[EXCEPTIONS] %s (Error Code: %u)\n", interrupt_messages[regs->int_no], regs->error_code);
+        kprintf("\n[EXCEPTIONS] %s (Error Code: %u)\n", 
+            interrupt_messages[regs->int_no],
+            regs->error_code);
 
         kprintf("System Halt");
         while(1);
@@ -64,8 +70,12 @@ void isr_handler(struct registers *regs) {
 
     // 하드웨어 IRQ(Interrupt ReQuest)
     if (regs->int_no >= 32 && regs->int_no <= 47) {
+        u8 irq = regs->int_no - 32;
 
-        // TODO: 실제 하드웨어 인터럽트 함수 만들기
+        // irq_handlers에 등록되어 있다면 호출
+        if (irq_handlers[irq]) {
+            irq_handlers[irq](regs);
+        }
 
         pic_send_eoi(regs->int_no);
     }
