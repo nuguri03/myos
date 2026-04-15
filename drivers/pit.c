@@ -21,7 +21,7 @@
 #define PIT_COMMAND_CHANNEL0 0x36
 
 /* 부팅 후 경과 틱 수 — pit_handler 호출마다 1씩 증가 */
-static u32 pit_ticks = 0;
+static volatile u32 pit_ticks = 0;
 
 /* IRQ0 발생마다 호출되는 핸들러 */
 static void pit_handler(struct registers* regs) {
