@@ -30,5 +30,8 @@ void main() {
         if (c) {
             vga_putchar(c);
         }
+        else {
+            __asm__ volatile("hlt");
+        }
     }
 }
