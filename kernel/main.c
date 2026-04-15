@@ -2,6 +2,7 @@
 #include "idt.h"
 #include "pit.h"
 #include "keyboard.h"
+#include "serial.h"
 #include "video.h"
 #include "printf.h"
 
@@ -10,8 +11,11 @@ void main() {
     init_idt();
     init_pit(1000);
     init_keyboard();
+    init_serial();
 
     clear_vga();
+    
+    serial_print("serial test\n");
 
     // // example -------------------------
     // char* msg = "Hello Kernel!";
