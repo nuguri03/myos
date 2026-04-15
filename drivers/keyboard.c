@@ -59,15 +59,15 @@ static const char scancode_table_shifted[128] = {
 
 /* 키보드 입력 원형 버퍼 (ring buffer)
  *
- * IRQ1 핸들러(생산자)가 push, 커널(소비자)이 getchar로 pop.
+ * IRQ1 핸들러가 push, 커널이 getchar로 pop.
  * head == tail: 버퍼 비어있음
  * 유효 데이터 범위: [head, tail) — head 포함, tail 미포함
  */
 #define KB_BUFFER_SIZE 256
 
 static char kb_buffer[KB_BUFFER_SIZE];
-static u32 kb_buf_head = 0;  /* 소비자가 다음에 읽을 위치 */
-static u32 kb_buf_tail = 0;  /* 생산자가 다음에 쓸 위치   */
+static volatile u32 kb_buf_head = 0;  /* 커널이 다음에 읽을 위치 */
+static volatile u32 kb_buf_tail = 0;  /* 핸들러가 다음에 쓸 위치   */
 
 /* Shift 키 현재 상태 (눌려있으면 true) */
 static bool shift_pressed = false;
@@ -92,10 +92,15 @@ static void kb_buffer_push(char c) {
  * 반환 후 head를 전진시켜 해당 슬롯을 재사용 가능 상태로 만듦.
  */
 char keyboard_getchar() {
-    if (kb_buf_head == kb_buf_tail) return 0;
+    __asm__ volatile("cli");    // 인터럽트 비활성화
+    if (kb_buf_head == kb_buf_tail) {
+        __asm__ volatile("sti");    // 인터럽트 활성화
+        return 0;
+    }
 
     char c = kb_buffer[kb_buf_head];
     kb_buf_head = (kb_buf_head + 1) % KB_BUFFER_SIZE;
+    __asm__ volatile("sti");
     return c;
 }
 
