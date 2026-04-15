@@ -73,13 +73,15 @@ ssize_t vga_putchar(const char ch) {
                 if (ch_at != ' ') break;
                 cursor.x--;
             }
-            cursor.x++;
+            u32 offset = get_offset(cursor.x, cursor.y);
+            char ch_at = (char)(video_memory[offset] & 0xFF);
+            if (ch_at != ' ') cursor.x++;
         }
         u32 offset = get_offset(cursor.x, cursor.y);
         video_memory[offset] = (u16)((DEFAULT_COLOR << 8) | ' ');
     } 
     else if (ch == '\t') {
-        u32 next_tab = (cursor.x + 8) & ~7;         // (cursor + 8) / 8 * 8 과 동일
+        u32 next_tab = (cursor.x + 8) & ~7;  // (cursor + 8) / 8 * 8 과 동일
         while (cursor.x < next_tab && cursor.x < WIDTH) {
             u32 offset = get_offset(cursor.x, cursor.y);
             video_memory[offset] = (u16)((DEFAULT_COLOR << 8) | ' ');
