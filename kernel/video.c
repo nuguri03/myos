@@ -52,13 +52,41 @@ static inline u32 get_offset(const u16 x, const u16 y) {
 }
 
 /* 문자 하나를 vga에 print하고, cursor를 업데이트하는 함수 */
-static ssize_t vga_putc(const char ch) {
+ssize_t vga_putchar(const char ch) {
     if (ch == '\n') {
         cursor.x = 0;
         cursor.y++;
-    } else if (ch == '\r') {
+    } 
+    else if (ch == '\r') {
         cursor.x = 0;
-    } else {
+    }
+    else if (ch == '\b') {
+        if (cursor.x > 0) {
+            cursor.x--;
+        } 
+        else if (cursor.y > 0) {
+            cursor.y--;
+            cursor.x = WIDTH - 1;
+            while (cursor.x > 0) {
+                u32 offset = get_offset(cursor.x, cursor.y);
+                char ch_at = (char)(video_memory[offset] & 0xFF);
+                if (ch_at != ' ') break;
+                cursor.x--;
+            }
+            cursor.x++;
+        }
+        u32 offset = get_offset(cursor.x, cursor.y);
+        video_memory[offset] = (u16)((DEFAULT_COLOR << 8) | ' ');
+    } 
+    else if (ch == '\t') {
+        u32 next_tab = (cursor.x + 8) & ~7;         // (cursor + 8) / 8 * 8 과 동일
+        while (cursor.x < next_tab && cursor.x < WIDTH) {
+            u32 offset = get_offset(cursor.x, cursor.y);
+            video_memory[offset] = (u16)((DEFAULT_COLOR << 8) | ' ');
+            cursor.x++;
+        }
+    }
+    else {
         u32 offset = get_offset(cursor.x, cursor.y);
         video_memory[offset] = (u16)((DEFAULT_COLOR << 8) | ch);
         cursor.x++;
@@ -89,7 +117,7 @@ ssize_t vga_print_string(const char* buf, const ssize_t len) {
     
     ssize_t i;
     for (i = 0; i < len; i++) {
-        vga_putc(buf[i]);
+        vga_putchar(buf[i]);
     }
 
     return i;

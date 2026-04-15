@@ -12,6 +12,8 @@ struct cursor_t {
 };
 
 void clear_vga();
+
+ssize_t vga_putchar(const char ch);
 ssize_t vga_print_string(const char* buf, const ssize_t len);
 
 #endif
