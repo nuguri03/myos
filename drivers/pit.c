@@ -34,6 +34,22 @@ u32 pit_get_ticks() {
 }
 
 void init_pit(u32 frequency) {
+    /* PIT divisor는 16비트이므로 1~65535 범위만 표현 가능하다.
+       따라서 frequency는 0이 될 수 없고, 너무 낮으면 divisor가 0xFFFF를 넘으므로
+       표현 가능한 최소 주파수로 올려서(clamp) 사용한다. */
+    if (frequency == 0) {
+        frequency = 1;
+    }
+
+    u32 min_frequency = (PIT_FREQUENCY + 0xFFFF - 1) / 0xFFFF;
+    if (frequency < min_frequency) {
+        frequency = min_frequency;
+    }
+
+    if (frequency > PIT_FREQUENCY) {
+        frequency = PIT_FREQUENCY;
+    }
+
     /* divisor = PIT 입력 클럭 / 원하는 주파수
        frequency = 1000 → divisor = 1193  → 1ms마다 IRQ0 발생
        frequency = 100  → divisor = 11932 → 10ms마다 IRQ0 발생 */
