@@ -132,7 +132,7 @@ ssize_t kprintf(const char* fmt, ...) {
         return written;
     }
 
-    vga_print_string(buf, written);
+    vga_print(buf, written);
 
     return written;
 }

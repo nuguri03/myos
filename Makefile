@@ -1,5 +1,5 @@
 # 1. Directories & Variables
-SRCDIRS = kernel
+SRCDIRS = kernel drivers lib
 INCDIR  = include
 BOOTDIR = boot
 OBJDIR  = build

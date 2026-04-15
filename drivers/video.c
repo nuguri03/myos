@@ -106,9 +106,9 @@ ssize_t vga_putchar(const char ch) {
     return 1;
 }
 
-/* vga_putc를 활용하여 문자열을 출력하는 함수 */
-ssize_t vga_print_string(const char* buf, const ssize_t len) {
-    if (buf == NULL || len < 0) {
+/* vga_putchar를 활용하여 문자열을 출력하는 함수 */
+ssize_t vga_print(const char* str, const ssize_t len) {
+    if (str == NULL || len < 0) {
         return -1;
     }
     if (len == 0) {
@@ -117,7 +117,7 @@ ssize_t vga_print_string(const char* buf, const ssize_t len) {
     
     ssize_t i;
     for (i = 0; i < len; i++) {
-        vga_putchar(buf[i]);
+        vga_putchar(str[i]);
     }
 
     return i;
