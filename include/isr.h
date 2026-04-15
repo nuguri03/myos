@@ -13,6 +13,9 @@ struct registers {
     u32 eip, cs, eflags, useresp, ss;
 };
 
+typedef void (*irq_handler_t)(struct registers*);
+
 void isr_handler(struct registers* regs);
+void register_irq_handler(u8 irq, irq_handler_t handler);
 
 #endif

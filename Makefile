@@ -1,5 +1,5 @@
 # 1. Directories & Variables
-SRCDIRS = kernel
+SRCDIRS = kernel drivers lib
 INCDIR  = include
 BOOTDIR = boot
 OBJDIR  = build
@@ -59,7 +59,7 @@ vpath %.asm $(SRCDIRS)
 all: disk.img
 
 run: disk.img
-	$(QEMU) -drive format=raw,file=$< $(QEMU_FLAGS)
+	$(QEMU) -drive format=raw,file=$< $(QEMU_FLAGS) -serial stdio
 
 disk.img: boot.bin kernel.bin
 	cat $^ > $@
