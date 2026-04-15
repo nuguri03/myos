@@ -54,6 +54,9 @@ const char *interrupt_messages[] = {
 };
 
 void register_irq_handler(u8 irq, irq_handler_t handler) {
+    if (irq >= (sizeof(irq_handlers) / sizeof(irq_handlers[0]))) {
+        return;
+    }
     irq_handlers[irq] = handler;
 }
 
