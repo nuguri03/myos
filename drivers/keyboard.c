@@ -70,7 +70,12 @@ static volatile u32 kb_buf_head = 0;  /* 커널이 다음에 읽을 위치 */
 static volatile u32 kb_buf_tail = 0;  /* 핸들러가 다음에 쓸 위치   */
 
 /* Shift 키 현재 상태 (눌려있으면 true) */
-static bool shift_pressed = false;
+static volatile bool lshift_pressed = false;
+static volatile bool rshift_pressed = false;
+
+static bool is_shift_pressed() {
+    return lshift_pressed || rshift_pressed;
+}
 
 /* 버퍼에 문자 1개를 씀 (IRQ1 핸들러에서 호출)
  *
@@ -123,16 +128,25 @@ static void keyboard_handler(struct registers* regs) {
      * 키를 뗄 때만 발생. ASCII 변환 없이 Shift 상태만 업데이트하고 리턴. */
     if (scancode & KEYBOARD_BREAK_MASK) {
         u8 make = scancode & (~KEYBOARD_BREAK_MASK);  /* 비트 7을 0으로 → make code 복원 */
-        if (make == SCANCODE_LSHIFT || make == SCANCODE_RSHIFT) {
-            shift_pressed = false;
+        if (make == SCANCODE_LSHIFT) { 
+            lshift_pressed = false;
+            return; 
+        }
+        if (make == SCANCODE_RSHIFT) { 
+            rshift_pressed = false; 
+            return; 
         }
         return;
     }
 
     /* Shift make code 처리
      * Shift 자체는 ASCII가 없으므로 버퍼에 넣지 않고 상태만 기록. */
-    if (scancode == SCANCODE_LSHIFT || scancode == SCANCODE_RSHIFT) {
-        shift_pressed = true;
+    if (scancode == SCANCODE_LSHIFT) { 
+        lshift_pressed = true; 
+        return; 
+    }
+    if (scancode == SCANCODE_RSHIFT) { 
+        rshift_pressed = true; 
         return;
     }
 
@@ -142,7 +156,7 @@ static void keyboard_handler(struct registers* regs) {
 
     /* 스캔코드 → ASCII 변환
      * Shift 상태에 따라 테이블 선택. */
-    char c = shift_pressed
+    char c = is_shift_pressed()
             ? scancode_table_shifted[scancode]
             : scancode_table[scancode];
 
