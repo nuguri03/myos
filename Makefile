@@ -56,12 +56,12 @@ vpath %.asm $(SRCDIRS)
 .PHONY: all run clean
 
 # 4. Build Rules
-all: disk.img
+all: myos.img
 
-run: disk.img
+run: myos.img
 	$(QEMU) -drive format=raw,file=$< $(QEMU_FLAGS) -serial stdio
 
-disk.img: boot.bin kernel.bin
+myos.img: boot.bin kernel.bin
 	cat $^ > $@
 
 kernel.bin: $(OBJDIR)/setup.o $(KERNEL_OBJS)
