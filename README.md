@@ -28,7 +28,7 @@ make run
   - ISR (Interrupt Service Routines)
   - 8259A PIC (Programmable Interrupt Controller) Remapping
 
-- [ ] **4. Hardware Drivers**
+- [x] **4. Hardware Drivers**
   - PIT (Programmable Interval Timer) — 주기적 타이머 인터럽트
   - Keyboard Driver — 스캔코드 처리, 키맵 변환
   - Serial Port (UART) — 디버깅용 출력
