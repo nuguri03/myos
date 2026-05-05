@@ -41,7 +41,7 @@ setup_start:
     mov eax, 0xE820
     mov ecx, E820_ENTRY_SIZE
     mov edx, E820_MAGIC
- 
+    int 0x15
 
     jc .e820_done       ; CF=1 -> 에러 or 마지막 엔트리 이후
     cmp eax, E820_MAGIC
