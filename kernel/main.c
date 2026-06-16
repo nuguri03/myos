@@ -18,7 +18,7 @@ void main() {
     init_serial();
 
     // pmm
-    e820_entry_t* map = (e820_entry_t*)E820_BUF_ADDR;
+    struct e820_entry_t* map = (struct e820_entry_t*)E820_BUF_ADDR;
     u32 count = *(u32*)E820_COUNT_ADDR;
     init_pmm(map, count, _kernel_start, _kernel_end);
     serial_print("PMM good");

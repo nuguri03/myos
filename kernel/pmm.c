@@ -51,7 +51,7 @@ void free_page(void* page) {
     bitmap_clear(idx);
 }
 
-void init_pmm(e820_entry_t* map, u32 count, u32 kernel_start, u32 kernel_end) {
+void init_pmm(struct e820_entry* map, u32 count, u32 kernel_start, u32 kernel_end) {
     // 1. total_pages 계산: usable 영역 합산
     total_pages = 0;
     for (u32 i = 0; i < count; i++) {
