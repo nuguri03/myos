@@ -3,20 +3,39 @@
 #include "pit.h"
 #include "keyboard.h"
 #include "serial.h"
+#include "types.h"
 #include "video.h"
-#include "printf.h"
+#include "pmm.h"
+
+#define E820_COUNT_ADDR 0x4FC
+#define E820_BUF_ADDR   0x500
+
+extern u32 _kernel_start;
+extern u32 _kernel_end;
 
 void main() {
-    init_gdt();
-    init_idt();
-    init_pit(1000);
-    init_keyboard();
+    // 디버깅용
     init_serial();
 
+    // pmm
+    e820_entry_t* map = (e820_entry_t*)E820_BUF_ADDR;
+    u32 count = *(u32*)E820_COUNT_ADDR;
+    init_pmm(map, count, _kernel_start, _kernel_end);
+    serial_print("PMM good");
+
+    // GDT/IDT
+    init_gdt();
+    init_idt();
+    serial_print("GDT/IDT good");
+    
+    // 디바이스
+    init_pit(1000);
+    init_keyboard();
+    serial_print("device good");
+
+    // 화면 지우기
     clear_vga();
     
-    serial_print("serial test\n");
-
     // // example -------------------------
     // char* msg = "Hello Kernel!";
     // kprintf("%s\n%x\n", msg, 125);

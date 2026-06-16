@@ -32,7 +32,7 @@ FREESTAND_FLAGS = -ffreestanding -nostdlib -fno-builtin -fno-stack-protector
 DEBUG_FLAGS     = -g -I$(INCDIR) -MMD -MP
 
 CFLAGS  = $(ARCH_FLAGS) $(FREESTAND_FLAGS) $(DEBUG_FLAGS) -c
-LDFLAGS = -m elf_i386 -Ttext 0x8000 -e setup_start --oformat binary
+LDFLAGS = -m elf_i386 -T kernel.ld --oformat binary
 
 # 2. Source & Object Files
 C_SRCS   = $(foreach dir, $(SRCDIRS), $(wildcard $(dir)/*.c))

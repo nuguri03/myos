@@ -13,6 +13,6 @@ typedef struct {
 void* alloc_page();
 void free_page(void* page);
 
-void init_pmm();
+void init_pmm(e820_entry_t* map, u32 count, u32 kernel_start, u32 kernel_end);
 
 #endif
