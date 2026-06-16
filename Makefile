@@ -14,15 +14,13 @@ ifneq ($(X86_CROSS),)
     # Termux/proot-distro 환경
     CC = i686-linux-gnu-gcc
     LD = i686-linux-gnu-ld
-    # VNC 옵션 추가
-    QEMU_FLAGS = -vnc :1 -audiodev none,id=snd0
 else
     # 일반 Ubuntu 환경
     CC = gcc
     LD = ld
-    # 일반 환경은 GUI 바로 띄움
-    QEMU_FLAGS =
 endif
+
+QEMU_FLAGS = -vnc 0.0.0.0:1
 
 ASM  = nasm
 # 32비트 커널이므로 i386 에뮬레이터가 더 적합함
