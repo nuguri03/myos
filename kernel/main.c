@@ -1,5 +1,6 @@
 #include "gdt.h"
 #include "idt.h"
+#include "paging.h"
 #include "pit.h"
 #include "keyboard.h"
 #include "serial.h"
@@ -18,20 +19,24 @@ void main() {
     init_serial();
 
     // pmm
-    struct e820_entry_t* map = (struct e820_entry_t*)E820_BUF_ADDR;
+    struct e820_entry* map = (struct e820_entry*)E820_BUF_ADDR;
     u32 count = *(u32*)E820_COUNT_ADDR;
     init_pmm(map, count, _kernel_start, _kernel_end);
-    serial_print("PMM good");
+    serial_print("PMM good\n");
+
+    // paging
+    init_paging();
+    serial_print("PAGING good\n");
 
     // GDT/IDT
     init_gdt();
     init_idt();
-    serial_print("GDT/IDT good");
+    serial_print("GDT/IDT good\n");
     
     // 디바이스
     init_pit(1000);
     init_keyboard();
-    serial_print("device good");
+    serial_print("device good\n");
 
     // 화면 지우기
     clear_vga();
