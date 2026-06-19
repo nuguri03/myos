@@ -33,7 +33,7 @@ make run
   - Keyboard Driver — 스캔코드 처리, 키맵 변환
   - Serial Port (UART) — 디버깅용 출력
 
-- [ ] **5. Memory Management**
+- [x] **5. Memory Management**
   - Physical Memory Manager — 페이지 프레임 할당
   - Paging — 가상 주소 공간, CR3/CR0 설정
   - Heap Allocator (`malloc` / `free`)
