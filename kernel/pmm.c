@@ -16,15 +16,15 @@ static u32 bitmap_size = 0;
 static u32 last_alloc = 0;
 
 static inline void bitmap_set(u32 page) {
-    bitmap[BITMAP_INDEX(page)] |= (1 << BITMAP_OFFSET(page));
+    bitmap[BITMAP_INDEX(page)] |= ((u32)1 << BITMAP_OFFSET(page));
 }
 
 static inline void bitmap_clear(u32 page) {
-    bitmap[BITMAP_INDEX(page)] &= ~ (1 << BITMAP_OFFSET(page));
+    bitmap[BITMAP_INDEX(page)] &= ~ ((u32)1 << BITMAP_OFFSET(page));
 }
 
 static inline bool bitmap_test(u32 page) {
-    return bitmap[BITMAP_INDEX(page)] & (1 << BITMAP_OFFSET(page));
+    return bitmap[BITMAP_INDEX(page)] & ((u32)1 << BITMAP_OFFSET(page));
 }
 
 void* alloc_page() {
