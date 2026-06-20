@@ -80,10 +80,17 @@ void init_pmm(struct e820_entry* map, u32 count, u32 kernel_start, u32 kernel_en
     // 3. e820 usable 영역만 free(0)로 열기
     for (u32 i = 0; i < count; i++) {
         if (map[i].type == 1) {
-            u32 start_page = map[i].base / PAGE_SIZE;
-            u32 end_page   = (map[i].base + map[i].length) / PAGE_SIZE;
+            u64 start_page = map[i].base / PAGE_SIZE;
+            u64 end_page   = (map[i].base + map[i].length + (PAGE_SIZE - 1)) / PAGE_SIZE;
 
-            for (u32 page = start_page; page < end_page; page++) {
+            if (start_page > MAX_PAGES) {
+                start_page = MAX_PAGES;
+            }
+            if (end_page > MAX_PAGES) {
+                end_page = MAX_PAGES;
+            }
+
+            for (u32 page = (u32)start_page; page < (u32)end_page; page++) {
                 bitmap_clear(page);
             }
         }
