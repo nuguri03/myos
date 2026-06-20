@@ -55,13 +55,22 @@ void init_pmm(struct e820_entry* map, u32 count, u32 kernel_start, u32 kernel_en
     // 1. total_pages 계산: usable 영역 합산
     total_pages = 0;
     for (u32 i = 0; i < count; i++) {
-        u32 end = (map[i].base + map[i].length) / PAGE_SIZE;
-        if (end > total_pages) {
-            total_pages = end;
+        u64 end = (map[i].base + map[i].length + (PAGE_SIZE - 1)) / PAGE_SIZE;
+
+        if (end > MAX_PAGES) {
+            end = MAX_PAGES;
+        }
+
+        if ((u32)end > total_pages) {
+            total_pages = (u32)end;
         }
     }
 
-    bitmap_size = (total_pages / 32) + 1;
+    bitmap_size = (total_pages + 31) / 32;
+    if (bitmap_size > BITMAP_ARRAY_SIZE) {
+        bitmap_size = BITMAP_ARRAY_SIZE;
+        total_pages = MAX_PAGES;
+    }
 
     // 2. 전부 used(1)로 초기화
     for (u32 i = 0; i < bitmap_size; i++) {
