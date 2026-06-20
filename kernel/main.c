@@ -35,10 +35,16 @@ void main() {
 
     // heap test
     int *a = (int *)malloc(sizeof(int));
-    serial_print("malloc good\n");
     *a = 42;
-    free(a);
-    serial_print("free good\n");
+    if (a) {
+        serial_print("malloc good\n");
+        
+        free(a);
+        serial_print("free good\n");
+    }
+    else {
+        serial_print("malloc BADDDD\n");
+    }
 
     // GDT/IDT
     init_gdt();
