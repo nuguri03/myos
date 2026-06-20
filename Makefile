@@ -14,15 +14,13 @@ ifneq ($(X86_CROSS),)
     # Termux/proot-distro 환경
     CC = i686-linux-gnu-gcc
     LD = i686-linux-gnu-ld
-    # VNC 옵션 추가
-    QEMU_FLAGS = -vnc :1 -audiodev none,id=snd0
 else
     # 일반 Ubuntu 환경
     CC = gcc
     LD = ld
-    # 일반 환경은 GUI 바로 띄움
-    QEMU_FLAGS =
 endif
+
+QEMU_FLAGS = -vnc 0.0.0.0:1
 
 ASM  = nasm
 # 32비트 커널이므로 i386 에뮬레이터가 더 적합함
@@ -34,7 +32,7 @@ FREESTAND_FLAGS = -ffreestanding -nostdlib -fno-builtin -fno-stack-protector
 DEBUG_FLAGS     = -g -I$(INCDIR) -MMD -MP
 
 CFLAGS  = $(ARCH_FLAGS) $(FREESTAND_FLAGS) $(DEBUG_FLAGS) -c
-LDFLAGS = -m elf_i386 -Ttext 0x8000 -e setup_start --oformat binary
+LDFLAGS = -m elf_i386 -T kernel.ld --oformat binary
 
 # 2. Source & Object Files
 C_SRCS   = $(foreach dir, $(SRCDIRS), $(wildcard $(dir)/*.c))
@@ -56,12 +54,12 @@ vpath %.asm $(SRCDIRS)
 .PHONY: all run clean
 
 # 4. Build Rules
-all: disk.img
+all: myos.img
 
-run: disk.img
+run: myos.img
 	$(QEMU) -drive format=raw,file=$< $(QEMU_FLAGS) -serial stdio
 
-disk.img: boot.bin kernel.bin
+myos.img: boot.bin kernel.bin
 	cat $^ > $@
 
 kernel.bin: $(OBJDIR)/setup.o $(KERNEL_OBJS)
