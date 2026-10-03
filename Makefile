@@ -1,91 +1,164 @@
-# 1. Directories & Variables
-SRCDIRS = kernel drivers lib
-INCDIR  = include
-BOOTDIR = boot
-OBJDIR  = build
-C_OBJDIR   = $(OBJDIR)/c
-ASM_OBJDIR = $(OBJDIR)/asm
+# Directories
+# =========================================
 
-# 환경 감지 (Termux vs 일반 Ubuntu)
-# i686-linux-gnu-gcc 존재 여부로 판단
-X86_CROSS = $(shell command -v i686-linux-gnu-gcc 2>/dev/null)
+SRCDIRS := kernel drivers lib
 
-ifneq ($(X86_CROSS),)
-    # Termux/proot-distro 환경
-    CC = i686-linux-gnu-gcc
-    LD = i686-linux-gnu-ld
-else
-    # 일반 Ubuntu 환경
-    CC = gcc
-    LD = ld
-endif
+INCDIR  := include
+BOOTDIR := boot
+OBJDIR  := build
 
-QEMU_FLAGS = -vnc 0.0.0.0:1
+C_OBJDIR   := $(OBJDIR)/c
+ASM_OBJDIR := $(OBJDIR)/asm
 
-ASM  = nasm
-# 32비트 커널이므로 i386 에뮬레이터가 더 적합함
-QEMU = qemu-system-i386
 
-ARCH_FLAGS      = -m32 -fno-pic -fno-pie
-FREESTAND_FLAGS = -ffreestanding -nostdlib -fno-builtin -fno-stack-protector
-# -MMD -MP: 헤더 파일 수정 시 자동으로 다시 빌드되게 함
-DEBUG_FLAGS     = -g -I$(INCDIR) -MMD -MP
+# Output Files
+# =========================================
 
-CFLAGS  = $(ARCH_FLAGS) $(FREESTAND_FLAGS) $(DEBUG_FLAGS) -c
-LDFLAGS = -m elf_i386 -T kernel.ld --oformat binary
+IMAGE      := myos.img
+BOOT_BIN   := boot.bin
+KERNEL_BIN := kernel.bin
+SETUP_OBJ  := $(OBJDIR)/setup.o
 
-# 2. Source & Object Files
-C_SRCS   = $(foreach dir, $(SRCDIRS), $(wildcard $(dir)/*.c))
-ASM_SRCS = $(foreach dir, $(SRCDIRS), $(wildcard $(dir)/*.asm))
 
-# kernel/isr.c   → build/c/isr.o
-# kernel/isr.asm → build/asm/isr.o
-C_OBJS   = $(patsubst %.c,   $(C_OBJDIR)/%.o,   $(notdir $(C_SRCS)))
-ASM_OBJS = $(patsubst %.asm, $(ASM_OBJDIR)/%.o, $(notdir $(ASM_SRCS)))
-KERNEL_OBJS = $(C_OBJS) $(ASM_OBJS)
+# Tools
+# =========================================
 
-# .d 파일은 build/c/ 에 생성됨
-DEPS = $(C_OBJS:.o=.d)
+CC   := gcc
+AS   := nasm
+LD   := ld
+QEMU := qemu-system-i386
 
-vpath %.c   $(SRCDIRS)
-vpath %.asm $(SRCDIRS)
 
-# 3. Phony Targets
+# Flags
+# =========================================
+
+CPPFLAGS := \
+	-I$(INCDIR) \
+	-MMD \
+	-MP
+
+CFLAGS := \
+	-std=c99 \
+	-m32 \
+	-march=i386 \
+	-fno-pic \
+	-fno-pie \
+	-ffreestanding \
+	-fno-builtin \
+	-fno-stack-protector \
+	-g
+
+LDFLAGS := \
+	-m elf_i386 \
+	-T kernel.ld \
+	--oformat binary
+
+ASFLAGS := -f elf32
+
+QEMU_FLAGS := \
+	-vnc 0.0.0.0:1 \
+	-audiodev none,id=noaudio
+
+
+# Source Files
+# =========================================
+
+C_SRCS := \
+	$(foreach dir,$(SRCDIRS),$(wildcard $(dir)/*.c))
+
+ASM_SRCS := \
+	$(foreach dir,$(SRCDIRS),$(wildcard $(dir)/*.asm))
+
+
+# Object Files
+# =========================================
+
+C_OBJS := \
+	$(patsubst %.c,$(C_OBJDIR)/%.o,$(C_SRCS))
+
+ASM_OBJS := \
+	$(patsubst %.asm,$(ASM_OBJDIR)/%.o,$(ASM_SRCS))
+
+KERNEL_OBJS := $(C_OBJS) $(ASM_OBJS)
+
+DEPS := $(C_OBJS:.o=.d)
+
+
+# Phony Targets
+# =========================================
+
 .PHONY: all run clean
 
-# 4. Build Rules
-all: myos.img
 
-run: myos.img
-	$(QEMU) -drive format=raw,file=$< $(QEMU_FLAGS) -serial stdio
+# Main Targets
+# =========================================
 
-myos.img: boot.bin kernel.bin
+all: $(IMAGE)
+
+run: $(IMAGE)
+	$(QEMU) \
+		-drive format=raw,file=$(IMAGE) \
+		$(QEMU_FLAGS) \
+		-serial stdio
+
+
+# OS Image
+# =========================================
+
+$(IMAGE): $(BOOT_BIN) $(KERNEL_BIN)
 	cat $^ > $@
 
-kernel.bin: $(OBJDIR)/setup.o $(KERNEL_OBJS)
+
+# Kernel
+# =========================================
+
+$(KERNEL_BIN): $(SETUP_OBJ) $(KERNEL_OBJS)
 	$(LD) $(LDFLAGS) $^ -o $@
 
-# 5. Compile Rules
-boot.bin: $(BOOTDIR)/boot.asm kernel.bin
-	@KERNEL_SIZE=$$(stat -c %s kernel.bin); \
-	SECTORS=$$(( (KERNEL_SIZE + 511) / 512 )); \
-	$(ASM) -f bin $< -D KERNEL_SECTORS=$$SECTORS -o $@
 
-$(OBJDIR)/setup.o: $(BOOTDIR)/setup.asm
+# Bootloader
+# =========================================
+
+$(BOOT_BIN): $(BOOTDIR)/boot.asm $(KERNEL_BIN)
+	@KERNEL_SIZE=$$(stat -c %s $(KERNEL_BIN)); \
+	SECTORS=$$(( (KERNEL_SIZE + 511) / 512 )); \
+	$(AS) -f bin $< \
+		-D KERNEL_SECTORS=$$SECTORS \
+		-o $@
+
+
+# Setup
+# =========================================
+
+$(SETUP_OBJ): $(BOOTDIR)/setup.asm
 	@mkdir -p $(dir $@)
-	$(ASM) -f elf32 $< -o $@
+	$(AS) $(ASFLAGS) $< -o $@
+
+
+# C
+# =========================================
 
 $(C_OBJDIR)/%.o: %.c
-	@mkdir -p $(C_OBJDIR)
-	$(CC) $(CFLAGS) $< -o $@
+	@mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+
+# Assembly
+# =========================================
 
 $(ASM_OBJDIR)/%.o: %.asm
-	@mkdir -p $(ASM_OBJDIR)
-	$(ASM) -f elf32 $< -o $@
+	@mkdir -p $(dir $@)
+	$(AS) $(ASFLAGS) $< -o $@
 
-# 6. Clean
-clean:
-	rm -rf $(OBJDIR) *.bin *.img
 
-# 7. Dependencies (헤더 파일 자동 추적)
+# Dependencies
+# =========================================
+
 -include $(DEPS)
+
+
+# Clean
+# =========================================
+
+clean:
+	rm -rf $(OBJDIR) $(BOOT_BIN) $(KERNEL_BIN) $(IMAGE)
