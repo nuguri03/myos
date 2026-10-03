@@ -1,13 +1,15 @@
-[BITS 16]
-
 %define KERNEL_CODE_SEG 0x08
 %define KERNEL_DATA_SEG 0x10
 
-%define E820_MAGIC      0x534D4150
-%define E820_ENTRY_SIZE 24
-%define E820_BUF_ADDR   0x500
-%define E820_COUNT_ADDR 0x4FC
+[BITS 16]
 
+section .data
+    e820_magic      equ 0x534D4150
+    e820_entry_size equ 24
+    e820_buf_addr   equ 0x500
+    e820_count_addr equ 0x4FC
+
+section .text
 global setup_start ; 링커의 엔트리 포인트
 extern main
 
@@ -33,25 +35,25 @@ setup_start:
     ; ===========================================================
     xor ax, ax
     mov es, ax
-    mov di, E820_BUF_ADDR
+    mov di, e820_buf_addr
     xor ebx, ebx
     xor ebp, ebp
 
 .e820_loop:
     mov eax, 0xE820
-    mov ecx, E820_ENTRY_SIZE
-    mov edx, E820_MAGIC
+    mov ecx, e820_entry_size
+    mov edx, e820_magic
     int 0x15
 
     jc .e820_done       ; CF=1 -> 에러 or 마지막 엔트리 이후
-    cmp eax, E820_MAGIC
+    cmp eax, e820_magic
     jne .e820_done      ; eax에 "SMAP" 없으면 이 BIOS는 E820 미지원
 
     test ecx, ecx       ; ecx = 0이면 빈 엔트리
     jz .e820_next
 
     inc ebp             ; ebp += 1
-    add di, E820_ENTRY_SIZE ; di += 24, 다음 슬롯으로
+    add di, e820_entry_size ; di += 24, 다음 슬롯으로
 
 .e820_next:
     test ebx, ebx       ; ebx = 0이면 마지막 엔트리
@@ -59,7 +61,7 @@ setup_start:
     jmp .e820_loop
 
 .e820_done:
-    mov dword [E820_COUNT_ADDR], ebp    ; E820_COUNT_ADDR에 엔트리 개수 저장
+    mov dword [e820_count_addr], ebp    ; e820_count_addr에 엔트리 개수 저장
 
     ; gdtr 메모리 주소로 가서 GDT를 읽고 GDT 레지스터에 저장
     ; size(2byte) / offset(4byte): gdt가 메모리 어디에 위치하는지
