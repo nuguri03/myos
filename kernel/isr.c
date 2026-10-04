@@ -3,6 +3,7 @@
 #include "isr.h"
 #include "pic.h"
 #include "printf.h"
+#include "serial.h"
 
 static irq_handler_t irq_handlers[16];
 
@@ -66,6 +67,8 @@ void isr_handler(struct registers *regs) {
         kprintf("\n[EXCEPTIONS] %s (Error Code: %u)\n", 
             interrupt_messages[regs->int_no],
             regs->error_code);
+        
+        serial_print(interrupt_messages[regs->int_no]);
 
         kprintf("System Halt");
         while(1);

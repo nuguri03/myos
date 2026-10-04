@@ -1,11 +1,11 @@
 #include "pmm.h"
+#include "paging.h"
 
 #define BITMAP_INDEX(page) ((page) / 32)
 #define BITMAP_OFFSET(page) ((page) % 32)
 
 #define MAX_PAGES           (1024 * 1024)        // 4GB / 4KB
 #define BITMAP_ARRAY_SIZE   (MAX_PAGES / 32)  // 32768
-#define PAGE_SIZE           4096
 
 static u32 bitmap_data[BITMAP_ARRAY_SIZE];
 static u32* bitmap = bitmap_data;

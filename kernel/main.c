@@ -65,6 +65,11 @@ void main() {
     // __asm__ volatile("int $0x03");
     // // example -------------------------
 
+    // PAGE FAULT 테스트
+    unmap_page((void*)0x00000000);
+    volatile u32 *ptr = (u32*)0x00000000;
+    *ptr = 123;
+
     __asm__ volatile("sti");
 
     while (1) {
