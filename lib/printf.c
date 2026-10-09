@@ -2,46 +2,37 @@
 #include "stdarg.h"
 #include "video.h"
 
-/* 정수를 문자열로 변경하는 함수 */
-static i32 itoa(const i32 number, char* str, u32 base) {
-    u32 i = 0;
-    bool is_negative = false;
+/* 정수를 문자열로 변경하는 함수
+base는 10 또는 16으로 사용 */
+static size_t utoa(u32 value, char *buf, u32 base) {
+    static const char digits[] = "0123456789ABCDEF";
+    size_t len = 0;
 
-    if (number == 0) {
-        str[i++] = '0';
-        str[i] = '\0';
-        return i;
+    do {
+        buf[len++] = digits[value % base];
+        value /= base;
+    } while (value != 0);
+
+    // 버퍼 반전(019 -> 910)
+    for (size_t i = 0; i < len / 2; i++) {
+        char tmp = buf[i];
+        buf[i] = buf[len - 1 - i];
+        buf[len - 1 - i] = tmp;
     }
 
-    u32 u_number;
+    buf[len] = '\0';
+    return len;
+}
 
-    if (base == 10 && number < 0) {
-        is_negative = true;
-        str[i++] = '-';
-        u_number = (u32)(-number);
-    } else {
-        u_number = (u32)number;
+static size_t itoa(i32 value, char *buf, u32 base) {
+    if (base == 10 && value < 0) {
+        buf[0] = '-';
+
+        // INT_MIN도 처리하도록 unsigned 연산으로 절댓값 계산
+        return 1 + utoa(0u - (u32)value, buf + 1, base);
     }
 
-    while (u_number != 0) {
-        u32 rem = u_number % base;
-
-        str[i++] = (rem > 9) ? (rem - 10) + 'A' : rem + '0';
-        u_number = u_number / base;
-    }
-
-    i32 start = is_negative ? 1 : 0;
-    i32 end = i - 1;
-    while (start < end) {
-        u8 temp = str[start];
-        str[start] = str[end];
-        str[end] = temp;
-        start++;
-        end--;
-    }
-    str[i] = '\0';
-
-    return i;
+    return utoa((u32)value, buf, base);
 }
 
 // 언젠가는 쓸 거임: kprintf("%5d", 10); 이런거 추가 할 때 사용할 듯
