@@ -1,13 +1,18 @@
+// kernel
 #include "gdt.h"
 #include "idt.h"
 #include "paging.h"
-#include "pit.h"
-#include "keyboard.h"
-#include "serial.h"
-#include "types.h"
-#include "video.h"
 #include "pmm.h"
 #include "heap.h"
+
+// driver
+#include "serial.h"
+#include "video.h"
+#include "pit.h"
+#include "keyboard.h"
+
+// lib
+#include "printf.h"
 
 #define E820_COUNT_ADDR 0x4FC
 #define E820_BUF_ADDR   0x500
@@ -23,43 +28,43 @@ void main() {
     struct e820_entry* map = (struct e820_entry*)E820_BUF_ADDR;
     u32 count = *(u32*)E820_COUNT_ADDR;
     init_pmm(map, count, (u32)&_kernel_start, (u32)&_kernel_end);
-    serial_print("PMM good\n");
+    serial_kprintf("PMM good\n");
 
     // paging
     init_paging();
-    serial_print("PAGING good\n");
+    serial_kprintf("PAGING good\n");
 
     // heap
     init_heap();
-    serial_print("HEAP good\n");
+    serial_kprintf("HEAP good\n");
 
     // heap test
     int *a = (int *)malloc(sizeof(int));
     *a = 42;
     if (a) {
-        serial_print("malloc good\n");
+        serial_kprintf("malloc good\n");
         
         free(a);
-        serial_print("free good\n");
+        serial_kprintf("free good\n");
     }
     else {
-        serial_print("malloc BADDDD\n");
+        serial_kprintf("malloc BADDDD\n");
     }
 
     // GDT/IDT
     init_gdt();
     init_idt();
-    serial_print("GDT/IDT good\n");
+    serial_kprintf("GDT/IDT good\n");
     
     // 디바이스
     init_pit(1000);
     init_keyboard();
-    serial_print("device good\n");
+    serial_kprintf("device good\n");
 
     // 화면 지우기
     clear_vga();
     
-    // // example -------------------------
+    // // printf example -------------------------
     // char* msg = "Hello Kernel!";
     // kprintf("%s\n%x\n", msg, 125);
     // __asm__ volatile("int $0x03");
