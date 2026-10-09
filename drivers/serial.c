@@ -1,6 +1,8 @@
 #include "serial.h"
 #include "io.h"
 
+#include "printf.h"
+
 /* COM1: base port 0x3F8, offset으로 내부 레지스터 구분 */
 #define SERIAL_PORT_BASE    0x3F8
 
@@ -41,17 +43,36 @@ static void serial_wait_ready() {
 
 /* THR이 비워질 때까지 폴링으로 대기
  * LSR 비트 5(THRE)가 1이 될 때까지 반복하여 이전 바이트 송신이 끝났는지 확인 */
-void serial_putchar(char c) {
+static void serial_putc(char c) {
     serial_wait_ready();
     outb(SERIAL_DATA, c);
 }
 
-void serial_print(const char *str) {
-    while (*str) {
-        if (*str == '\n') {  // terminal은 "\r\n"을 기대함
-            serial_putchar('\r');
+ssize_t serial_kprintf(const char *fmt, ...) {
+    char buf[1024];
+    va_list args;
+
+    va_start(args, fmt);
+
+    ssize_t result = kvsnprintf(buf, sizeof(buf), fmt, args);
+
+    va_end(args);
+
+    if (result >= 0) {
+        size_t stored = (size_t)result;
+
+        // 출력이 짤렸을 때
+        if (stored >= sizeof(buf)) {
+            stored = sizeof(buf) - 1;
         }
-        serial_putchar(*str);
-        str++;
+        
+        for (size_t i = 0; i < stored; i++) {
+            if (buf[i] == '\n') {
+                serial_putc('\r');
+            }
+            serial_putc(buf[i]);
+        }
     }
+
+    return result;
 }
