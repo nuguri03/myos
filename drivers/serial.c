@@ -41,9 +41,8 @@ static void serial_wait_ready() {
     while (!(inb(SERIAL_LINE_STATUS) & SERIAL_LSR_THRE));
 }
 
-/* THR이 비워질 때까지 폴링으로 대기
- * LSR 비트 5(THRE)가 1이 될 때까지 반복하여 이전 바이트 송신이 끝났는지 확인 */
-static void serial_putc(char c) {
+/* LSR의 THRE 비트가 1이 될 때까지 대기:
+ * 송신 holding register가 비어 다음 바이트를 쓸 수 있음 */static void serial_putc(char c) {
     serial_wait_ready();
     outb(SERIAL_DATA, c);
 }
