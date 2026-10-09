@@ -1,13 +1,18 @@
+// kernel
 #include "gdt.h"
 #include "idt.h"
 #include "paging.h"
-#include "pit.h"
-#include "keyboard.h"
-#include "serial.h"
-#include "types.h"
-#include "video.h"
 #include "pmm.h"
 #include "heap.h"
+
+// driver
+#include "serial.h"
+#include "video.h"
+#include "pit.h"
+#include "keyboard.h"
+
+// lib
+#include "printf.h"
 
 #define E820_COUNT_ADDR 0x4FC
 #define E820_BUF_ADDR   0x500
@@ -59,7 +64,7 @@ void main() {
     // 화면 지우기
     clear_vga();
     
-    // // example -------------------------
+    // // printf example -------------------------
     // char* msg = "Hello Kernel!";
     // kprintf("%s\n%x\n", msg, 125);
     // __asm__ volatile("int $0x03");

@@ -55,75 +55,113 @@ static size_t itoa(i32 value, char *buf, u32 base) {
 //     return number * sign;
 // }
 
+// len은 실제 저장 길이가 아니라, 전체 출력에 필요한 길이
+static void buf_putc(char *buf, size_t size, size_t *len, char c) {
+    // 마지막 '\0' 자리 확보. size == 0일 때의 뺄셈도 방지.
+    if (size > 0 && *len < size - 1) {
+        buf[*len] = c;
+    }
+
+    // 버퍼의 용량이 작아서 짤렸더라도 len은 증가
+    (*len)++;
+}
+
 /* 포맷 문자열 파싱하는 함수 */
-static ssize_t vsprintf(char* buf, const char *fmt, va_list args) {
-    char *str = buf;
-    const char* s;
+ssize_t kvsnprintf(char *buf, size_t buf_size, const char *fmt, va_list args) {
+    size_t len = 0;
+    const char *s;
+    char number[12]; // 32비트 십진수: 부호 1 + 숫자 10 + '\0'
 
     for (; *fmt; fmt++) {
         if (*fmt != '%') {
-            *str++ = *fmt;
+            buf_putc(buf, buf_size, &len, *fmt);
             continue;
         }
 
         fmt++;
 
+        // 문자열 끝에 '%'만 있는 경우: '%'를 출력하고 종료
+        if (*fmt == '\0') {
+            buf_putc(buf, buf_size, &len, '%');
+            break;
+        }
+
         switch (*fmt) {
             case 'c':
-                *str++ = (u8)va_arg(args, i32);
+                buf_putc(buf, buf_size, &len,
+                         (char)va_arg(args, i32));
                 break;
 
             case 's':
-                s = va_arg(args, char*);
-                if (!s) return -1;
+                s = va_arg(args, const char *);
+                if (!s) {
+                    s = "(null)";
+                }
                 while (*s) {
-                    *str++ = *s++;
+                    buf_putc(buf, buf_size, &len, *s++);
                 }
                 break;
 
             case 'd':
-                str += itoa(va_arg(args, i32), str, 10);
+                itoa(va_arg(args, i32), number, 10);
+                for (s = number; *s; s++) {
+                    buf_putc(buf, buf_size, &len, *s);
+                }
                 break;
 
             case 'u':
-                str += itoa(va_arg(args, u32), str, 10);
+                utoa(va_arg(args, u32), number, 10);
+                for (s = number; *s; s++) {
+                    buf_putc(buf, buf_size, &len, *s);
+                }
                 break;
 
             case 'x':
-                str += itoa(va_arg(args, i32), str, 16);
+                utoa(va_arg(args, u32), number, 16);
+                for (s = number; *s; s++) {
+                    buf_putc(buf, buf_size, &len, *s);
+                }
                 break;
 
             case '%':
-                *str++ = '%';
+                buf_putc(buf, buf_size, &len, '%');
                 break;
 
             default:
-                *str++ = '%';
-                *str++ = *fmt;
+                buf_putc(buf, buf_size, &len, '%');
+                buf_putc(buf, buf_size, &len, *fmt);
                 break;
         }
     }
 
-    *str = '\0';
-    return str - buf;
+    if (buf_size > 0) {
+        size_t end = (len < buf_size) ? len : buf_size - 1;
+        buf[end] = '\0';
+    }
+
+    return (ssize_t)len;
 }
 
 ssize_t kprintf(const char* fmt, ...) {
     char buf[1024];
     va_list args;
-    ssize_t written;
 
     va_start(args, fmt);
 
-    written = vsprintf(buf, fmt, args);
+    ssize_t result = kvsnprintf(buf, sizeof(buf), fmt, args);
 
     va_end(args);
 
-    if (written < 0) {
-        return written;
+    if (result >= 0) {
+        size_t stored = (size_t)result;
+
+        // 출력이 짤렸을 때
+        if (stored >= sizeof(buf)) {
+            stored = sizeof(buf) - 1;
+        }
+
+        vga_print(buf, stored);
     }
 
-    vga_print(buf, written);
-
-    return written;
+    return result;
 }
