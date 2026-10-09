@@ -2,7 +2,10 @@
 #define PRINTF_H
 
 #include "types.h"
+#include "stdarg.h"
 
-i32 kprintf(const char *fmt, ...);
+ssize_t kvsnprintf(char* buf, size_t buf_size, const char *fmt, va_list args);
+
+ssize_t kprintf(const char *fmt, ...);
 
 #endif

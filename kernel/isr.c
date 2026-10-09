@@ -68,7 +68,9 @@ void isr_handler(struct registers *regs) {
             interrupt_messages[regs->int_no],
             regs->error_code);
         
-        serial_print(interrupt_messages[regs->int_no]);
+        serial_kprintf("\n[EXCEPTIONS] %s (Error Code: %u)\n", 
+            interrupt_messages[regs->int_no],
+            regs->error_code);
 
         kprintf("System Halt");
         while(1);
