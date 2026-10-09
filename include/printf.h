@@ -3,6 +3,6 @@
 
 #include "types.h"
 
-i32 kprintf(const char *fmt, ...);
+ssize_t kprintf(const char *fmt, ...);
 
 #endif
