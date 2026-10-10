@@ -15,7 +15,7 @@
 #define BITMAP_INDEX(page)  ((page) / 32)
 #define BITMAP_OFFSET(page) ((page) % 32)
 
-#define MAX_PAGES           (1024 * 1024)        // 4GB(2^32)(32비트 운영체제의 최대 주소 공간) / 4KB(2^12)(4KB 페이지) = 1,048,576(PAGES)
+#define MAX_PAGES           (1024 * 1024)        // 4GB(2^32)(32비트 운영체제의 최대 주소 공간) / 4KB(2^12)(4KB 페이지) = 1,048,576(PAGES) = 0x000FFFFF
 #define BITMAP_ARRAY_SIZE   (MAX_PAGES / 32)     // 4GB / 4KB / 32 = 32,768 (하나의 배열 값에 32개의 페이지 상태를 기록하므로 32로 나눔)
 
 static u32 bitmap_data[BITMAP_ARRAY_SIZE];
@@ -44,11 +44,13 @@ static inline bool bitmap_test(u32 page) {
     return (bitmap[BITMAP_INDEX(page)] & ((u32)1 << BITMAP_OFFSET(page))) != 0;
 }
 
+// return = 할당한 4KB 페이지의 물리 주소, NULL = 할당 실패
 void* alloc_page() {
     for (u32 i = last_alloc; i < total_pages; i++) {
         if (!bitmap_test(i)) {
             bitmap_set(i);
             last_alloc = i;
+            // page * 4KB = page << 12 (실제 페이지는 4KB 단위로 관리되므로 12비트 시프트)
             return (void*)(i << 12);
         }
     }
@@ -57,6 +59,7 @@ void* alloc_page() {
         if (!bitmap_test(i)) {
             bitmap_set(i);
             last_alloc = i;
+            // page * 4KB = page << 12 (실제 페이지는 4KB 단위로 관리되므로 12비트 시프트)
             return (void*)(i << 12);
         }
     }
@@ -99,6 +102,7 @@ void init_pmm(struct e820_entry* map, u32 count, u32 kernel_start, u32 kernel_en
             total_pages = (u32)end;
         }
     }
+
     bitmap_size = (total_pages + 31) / 32;
 
     // 2. 전부 used(1)로 초기화
@@ -109,8 +113,8 @@ void init_pmm(struct e820_entry* map, u32 count, u32 kernel_start, u32 kernel_en
     // 3. e820 usable 영역만 free(0)로 열기
     for (u32 i = 0; i < count; i++) {
         if (map[i].type == 1) {
-            u64 start_page = map[i].base / PAGE_SIZE;
-            u64 end_page   = (map[i].base + map[i].length + (PAGE_SIZE - 1)) / PAGE_SIZE;
+            u64 start_page = (map[i].base + PAGE_SIZE - 1) / PAGE_SIZE;
+            u64 end_page   = (map[i].base + map[i].length) / PAGE_SIZE;
 
             if (start_page > MAX_PAGES) {
                 start_page = MAX_PAGES;
