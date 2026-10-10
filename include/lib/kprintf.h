@@ -1,8 +1,8 @@
-#ifndef PRINTF_H
-#define PRINTF_H
+#ifndef KPRINTF_H
+#define KPRINTF_H
 
 #include "types.h"
-#include "stdarg.h"
+#include "kstdarg.h"
 
 ssize_t kvsnprintf(char* buf, size_t buf_size, const char *fmt, va_list args);
 

@@ -1,7 +1,7 @@
 /* PIC = 여러 장치와 CPU 사이의 교통 정리 담당 */
 
-#include "pic.h"
-#include "io.h"
+#include "kernel/pic.h"
+#include "kernel/io.h"
 
 /* x86 I/O 포트 주소는 고정되어 있음 */
 

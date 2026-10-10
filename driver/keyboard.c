@@ -1,6 +1,6 @@
-#include "keyboard.h"
-#include "io.h"
-#include "isr.h"
+#include "driver/keyboard.h"
+#include "kernel/io.h"
+#include "kernel/isr.h"
 
 /* 스캔코드 Set 1 → ASCII 변환 테이블 (Shift 없음)
  *

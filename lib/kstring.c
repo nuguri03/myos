@@ -1,7 +1,7 @@
-#include "string.h"
+#include "lib/kstring.h"
 
 /* 문자열의 길이 출력 함수 */
-ssize_t strlen(const char* str) {
+ssize_t kstrlen(const char* str) {
     if (str == NULL) {
         return -1;
     }

@@ -1,7 +1,7 @@
 # Directories
 # =========================================
 
-SRCDIRS := kernel drivers lib
+SRCDIRS := kernel driver lib
 
 INCDIR  := include
 BOOTDIR := boot

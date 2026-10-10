@@ -1,6 +1,5 @@
-#include "printf.h"
-#include "stdarg.h"
-#include "video.h"
+#include "lib/kprintf.h"
+#include "driver/video.h"
 
 /* 정수를 문자열로 변경하는 함수
 base는 10 또는 16으로 사용 */
