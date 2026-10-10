@@ -1,11 +1,22 @@
+// 물리 메모리 관리
 #include "pmm.h"
 #include "paging.h"
 
-#define BITMAP_INDEX(page) ((page) / 32)
+/* 물리 메모리 관리 (Physical Memory Manager, PMM)
+* - 4KB 단위 페이지를 관리
+* - 비트맵(bitmap)으로 사용 여부를 추적
+* - e820 메모리 맵을 기반으로 초기화
+*/
+
+// 비트맵(bitmap)은 여러 대상의 상태를 비트 하나씩으로 기록하는 방식
+// PMM에서는 물리 페이지 하나의 할당 가능 여부를 비트 하나에 저장
+// u32 배열을 사용하여 배열 1개당 32개의 페이지 상태를 기록
+
+#define BITMAP_INDEX(page)  ((page) / 32)
 #define BITMAP_OFFSET(page) ((page) % 32)
 
-#define MAX_PAGES           (1024 * 1024)        // 4GB / 4KB
-#define BITMAP_ARRAY_SIZE   (MAX_PAGES / 32)  // 32768
+#define MAX_PAGES           (1024 * 1024)        // 4GB(2^32)(32비트 운영체제의 최대 주소 공간) / 4KB(2^12)(4KB 페이지) = 1,048,576(PAGES)
+#define BITMAP_ARRAY_SIZE   (MAX_PAGES / 32)     // 4GB / 4KB / 32 = 32,768 (하나의 배열 값에 32개의 페이지 상태를 기록하므로 32로 나눔)
 
 static u32 bitmap_data[BITMAP_ARRAY_SIZE];
 static u32* bitmap = bitmap_data;
@@ -14,6 +25,11 @@ static u32 total_pages = 0;
 static u32 bitmap_size = 0;
 
 static u32 last_alloc = 0;
+
+/* example(37th page)
+* 37th page -> 37 / 32 = 1 (bitmap[1]에 저장)
+* 37 % 32 = 5 (bitmap[1]의 5번째 비트에 저장)
+*/
 
 static inline void bitmap_set(u32 page) {
     bitmap[BITMAP_INDEX(page)] |= ((u32)1 << BITMAP_OFFSET(page));
@@ -52,7 +68,7 @@ void free_page(void* page) {
 }
 
 void init_pmm(struct e820_entry* map, u32 count, u32 kernel_start, u32 kernel_end) {
-    // 1. total_pages 계산: usable 영역 합산
+    // 1. total_pages 계산 및 bitmap_size 계산: usable 영역 합산
     total_pages = 0;
     for (u32 i = 0; i < count; i++) {
         u64 end = (map[i].base + map[i].length + (PAGE_SIZE - 1)) / PAGE_SIZE;
@@ -65,12 +81,7 @@ void init_pmm(struct e820_entry* map, u32 count, u32 kernel_start, u32 kernel_en
             total_pages = (u32)end;
         }
     }
-
     bitmap_size = (total_pages + 31) / 32;
-    if (bitmap_size > BITMAP_ARRAY_SIZE) {
-        bitmap_size = BITMAP_ARRAY_SIZE;
-        total_pages = MAX_PAGES;
-    }
 
     // 2. 전부 used(1)로 초기화
     for (u32 i = 0; i < bitmap_size; i++) {

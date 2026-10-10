@@ -1,3 +1,4 @@
+// virtual_address -> page_directory -> page_table -> physical_address
 #include "paging.h"
 
 #define PAGE_TABLE_COUNT 5  // 5개 * 4MB = 20MB identity map
@@ -5,6 +6,7 @@
 static u32 page_directory[1024] __attribute__((aligned(4096)));
 static u32 page_table[PAGE_TABLE_COUNT][1024] __attribute__((aligned(4096)));
 
+/* TLB 무효화 */
 static inline void invlpg(void* addr) {
     __asm__ volatile(
         "invlpg (%0)"
