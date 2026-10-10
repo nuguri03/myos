@@ -67,6 +67,23 @@ void free_page(void* page) {
     bitmap_clear(idx);
 }
 
+void reserve_region(u32 start, u32 end) {
+    if (start >= end) {
+        return;
+    }
+
+    u32 start_page = start / PAGE_SIZE;
+    u32 end_page = (u32)(((u64)end + PAGE_SIZE - 1) / PAGE_SIZE);
+    
+    if (end_page > total_pages) {
+        end_page = total_pages;
+    }
+
+    for (u32 page = start_page; page < end_page; page++) {
+        bitmap_set(page);
+    }
+}
+
 void init_pmm(struct e820_entry* map, u32 count, u32 kernel_start, u32 kernel_end) {
     // 1. total_pages 계산 및 bitmap_size 계산: usable 영역 합산
     total_pages = 0;
@@ -108,12 +125,7 @@ void init_pmm(struct e820_entry* map, u32 count, u32 kernel_start, u32 kernel_en
     }
 
     // 4. 커널 영역 다시 used로 마킹
-    u32 kstart_page = kernel_start / PAGE_SIZE;
-    u32 kend_page   = (kernel_end + PAGE_SIZE - 1) / PAGE_SIZE;  // 올림
-
-    for (u32 page = kstart_page; page < kend_page; page++) {
-        bitmap_set(page);
-    }
+    reserve_region(kernel_start, kernel_end);
 
     // 5. bitmap 영역 used로 마킹
     u32 bitmap_start = (u32)bitmap_data;

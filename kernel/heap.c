@@ -1,4 +1,5 @@
 #include "heap.h"
+#include "pmm.h"
 
 extern u32 _kernel_end;
 
@@ -15,6 +16,9 @@ void init_heap() {
         heap = NULL;
         return;
     }
+
+    reserve_region(HEAP_START, HEAP_END);
+
     heap->size = HEAP_END - HEAP_START - HEADER_SIZE;
     heap->free = 1;
     heap->next = NULL;
