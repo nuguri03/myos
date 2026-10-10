@@ -34,6 +34,9 @@ void main() {
     init_paging();
     serial_kprintf("PAGING good\n");
 
+    // stack
+    reserve_region(0x013F0000, 0x01400000); // 64KB stack
+
     // heap
     init_heap();
     serial_kprintf("HEAP good\n");

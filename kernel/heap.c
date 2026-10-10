@@ -4,7 +4,9 @@
 extern u32 _kernel_end;
 
 // 4KB 정렬
-#define HEAP_START  (((u32)&_kernel_end + 0xFFF) & ~0xFFF)
+#define KERNEL_END_ALIGNED (((u32)&_kernel_end + 0xFFFu) & ~0xFFFu)
+
+#define HEAP_START ((KERNEL_END_ALIGNED) < 0x00100000u ? 0x00100000u : KERNEL_END_ALIGNED)
 
 // stack이 0x01400000 ~ 0x013F0000 사이에 위치하므로, heap은 그보다 낮은 주소에 위치해야 함
 #define HEAP_END    0x013F0000                              
