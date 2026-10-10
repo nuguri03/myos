@@ -1,7 +1,7 @@
-#include "serial.h"
-#include "io.h"
+#include "driver/serial.h"
+#include "kernel/io.h"
 
-#include "printf.h"
+#include "lib/kprintf.h"
 
 /* COM1: base port 0x3F8, offset으로 내부 레지스터 구분 */
 #define SERIAL_PORT_BASE    0x3F8
@@ -47,7 +47,7 @@ static void serial_wait_ready() {
     outb(SERIAL_DATA, c);
 }
 
-ssize_t serial_kprintf(const char *fmt, ...) {
+ssize_t serial_printf(const char *fmt, ...) {
     char buf[1024];
     va_list args;
 

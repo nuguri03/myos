@@ -1,8 +1,8 @@
 /* IDT = Interrupt Descriptor Table
     인터럽트 번호 -> 핸들러 함수 주소를 매핑하는 테이블 */
 
-#include "idt.h"
-#include "pic.h"
+#include "kernel/idt.h"
+#include "kernel/pic.h"
 
 struct idt_entry idt[256];
 struct idt_ptr idtp;

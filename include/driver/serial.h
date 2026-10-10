@@ -4,7 +4,6 @@
 #include "types.h"
 
 void init_serial();
-ssize_t serial_kprintf(const char *fmt, ...);
-
+ssize_t serial_printf(const char *fmt, ...);
 
 #endif

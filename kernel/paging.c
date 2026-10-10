@@ -1,5 +1,5 @@
 // virtual_address -> page_directory -> page_table -> physical_address
-#include "paging.h"
+#include "kernel/paging.h"
 
 #define PAGE_TABLE_COUNT 5  // 5개 * 4MB = 20MB identity map
 

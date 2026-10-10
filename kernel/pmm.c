@@ -1,6 +1,5 @@
-// 물리 메모리 관리
-#include "pmm.h"
-#include "paging.h"
+#include "kernel/pmm.h"
+#include "kernel/paging.h"
 
 /* 물리 메모리 관리 (Physical Memory Manager, PMM)
 * - 4KB 단위 페이지를 관리

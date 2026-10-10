@@ -1,18 +1,19 @@
 // kernel
-#include "gdt.h"
-#include "idt.h"
-#include "paging.h"
-#include "pmm.h"
-#include "heap.h"
+#include "kernel/gdt.h"
+#include "kernel/idt.h"
+#include "kernel/paging.h"
+#include "kernel/pmm.h"
+#include "kernel/heap.h"
 
 // driver
-#include "serial.h"
-#include "video.h"
-#include "pit.h"
-#include "keyboard.h"
+#include "driver/serial.h"
+#include "driver/video.h"
+#include "driver/pit.h"
+#include "driver/keyboard.h"
 
 // lib
-#include "printf.h"
+#include "kstdio.h"
+#include "kstdlib.h"
 
 #define E820_COUNT_ADDR 0x4FC
 #define E820_BUF_ADDR   0x500
@@ -28,30 +29,30 @@ void main() {
     struct e820_entry* map = (struct e820_entry*)E820_BUF_ADDR;
     u32 count = *(u32*)E820_COUNT_ADDR;
     init_pmm(map, count, (u32)&_kernel_start, (u32)&_kernel_end);
-    serial_kprintf("PMM good\n");
+    serial_printf("PMM good\n");
 
     // paging
     init_paging();
-    serial_kprintf("PAGING good\n");
+    serial_printf("PAGING good\n");
 
     // stack
     reserve_region(0x013F0000, 0x01400000); // 64KB stack
 
     // heap
     init_heap();
-    serial_kprintf("HEAP good\n");
+    serial_printf("HEAP good\n");
 
     // heap test
-    int *a = (int *)malloc(sizeof(int));
+    int *a = (int *)kmalloc(sizeof(int));
     *a = 42;
     if (a) {
-        serial_kprintf("malloc good\n");
+        serial_printf("malloc good\n");
         
-        free(a);
-        serial_kprintf("free good\n");
+        kfree(a);
+        serial_printf("free good\n");
     }
     else {
-        serial_kprintf("malloc BADDDD\n");
+        serial_printf("malloc BADDDD\n");
     }
     // heap overlap test
     // u32 heap_start = ((u32)&_kernel_end + 0xFFF) & ~0xFFF;
@@ -85,12 +86,12 @@ void main() {
     // GDT/IDT
     init_gdt();
     init_idt();
-    serial_kprintf("GDT/IDT good\n");
+    serial_printf("GDT/IDT good\n");
     
     // 디바이스
     init_pit(1000);
     init_keyboard();
-    serial_kprintf("device good\n");
+    serial_printf("device good\n");
 
     // 화면 지우기
     clear_vga();

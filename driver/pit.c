@@ -1,9 +1,9 @@
 /* PIT(Programmable Interval Timer)
    1193182Hz 클럭을 divisor로 나눠 원하는 주파수로 IRQ0를 발생시키는 칩 */
 
-#include "pit.h"
-#include "isr.h"
-#include "io.h"
+#include "driver/pit.h"
+#include "kernel/isr.h"
+#include "kernel/io.h"
 
 // PIT I/O 포트 주소 — x86 스펙에 고정
 #define PIT_CHANNEL0    0x40    // Channel 0 데이터 포트 — IRQ0 발생용

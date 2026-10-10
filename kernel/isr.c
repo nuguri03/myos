@@ -1,9 +1,9 @@
 /* ISR = Interrupt Service Routine */
 
-#include "isr.h"
-#include "pic.h"
-#include "printf.h"
-#include "serial.h"
+#include "kernel/isr.h"
+#include "kernel/pic.h"
+#include "kstdio.h"
+#include "driver/serial.h"
 
 static irq_handler_t irq_handlers[16];
 
@@ -68,7 +68,7 @@ void isr_handler(struct registers *regs) {
             interrupt_messages[regs->int_no],
             regs->error_code);
         
-        serial_kprintf("\n[EXCEPTIONS] %s (Error Code: %u)\n", 
+        serial_printf("\n[EXCEPTIONS] %s (Error Code: %u)\n", 
             interrupt_messages[regs->int_no],
             regs->error_code);
 
