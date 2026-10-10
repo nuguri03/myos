@@ -40,7 +40,8 @@ static inline void bitmap_clear(u32 page) {
 }
 
 static inline bool bitmap_test(u32 page) {
-    return bitmap[BITMAP_INDEX(page)] & ((u32)1 << BITMAP_OFFSET(page));
+    // bool == char 이라서 != 0 으로 비교 안하면 앞에 짤려서 8비트만 비교됨
+    return (bitmap[BITMAP_INDEX(page)] & ((u32)1 << BITMAP_OFFSET(page))) != 0;
 }
 
 void* alloc_page() {
@@ -74,7 +75,7 @@ void reserve_region(u32 start, u32 end) {
 
     u32 start_page = start / PAGE_SIZE;
     u32 end_page = (u32)(((u64)end + PAGE_SIZE - 1) / PAGE_SIZE);
-    
+
     if (end_page > total_pages) {
         end_page = total_pages;
     }

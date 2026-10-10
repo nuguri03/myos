@@ -50,6 +50,34 @@ void main() {
     else {
         serial_kprintf("malloc BADDDD\n");
     }
+    // heap overlap test
+    u32 heap_start = ((u32)&_kernel_end + 0xFFF) & ~0xFFF;
+    u32 heap_end = 0x01400000;
+
+    u32 allocated = 0;
+    bool overlap = false;
+
+    while (1) {
+        void* page = alloc_page();
+        if (page == NULL) {
+            break;
+        }
+        serial_kprintf("alloc_page: %x\n", (u32)page);
+        
+        u32 addr = (u32)page;
+
+        if (addr >= heap_start && addr < heap_end) {
+            serial_kprintf("FAIL: heap overlap at %x\n", addr);
+            overlap = true;
+            break;
+        }
+
+        allocated++;
+    }
+
+    if (!overlap) {
+        serial_kprintf("PASS: no heap overlap, pages=%u\n", allocated);
+    }
 
     // GDT/IDT
     init_gdt();
@@ -71,9 +99,9 @@ void main() {
     // // example -------------------------
 
     // PAGE FAULT 테스트
-    unmap_page((void*)0x00000000);
-    volatile u32 *ptr = (u32*)0x00000000;
-    *ptr = 123;
+    // unmap_page((void*)0x00000000);
+    // volatile u32 *ptr = (u32*)0x00000000;
+    // *ptr = 123;
 
     __asm__ volatile("sti");
 
