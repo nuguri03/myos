@@ -3,8 +3,11 @@
 
 extern u32 _kernel_end;
 
-#define HEAP_START  (((u32)&_kernel_end + 0xFFF) & ~0xFFF)  // 4KB 정렬
-#define HEAP_END    0x01400000  // 20MB
+// 4KB 정렬
+#define HEAP_START  (((u32)&_kernel_end + 0xFFF) & ~0xFFF)
+
+// stack이 0x01400000 ~ 0x013F0000 사이에 위치하므로, heap은 그보다 낮은 주소에 위치해야 함
+#define HEAP_END    0x013F0000                              
 
 #define HEADER_SIZE sizeof(struct block_header)
 
