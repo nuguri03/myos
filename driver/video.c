@@ -1,5 +1,5 @@
-#include "video.h"
-#include "io.h"
+#include "driver/video.h"
+#include "kernel/io.h"
 
 // 0xB8000 = VGA 텍스트 모드 프레임버퍼의 시작 주소
 static u16* video_memory = (u16*)0xB8000;

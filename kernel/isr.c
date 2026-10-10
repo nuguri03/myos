@@ -1,8 +1,8 @@
 /* ISR = Interrupt Service Routine */
 
-#include "isr.h"
-#include "pic.h"
-#include "printf.h"
+#include "kernel/isr.h"
+#include "kernel/pic.h"
+#include "kstdio.h"
 
 static irq_handler_t irq_handlers[16];
 

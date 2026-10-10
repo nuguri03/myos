@@ -3,6 +3,6 @@
 
 #include "types.h"
 
-ssize_t strlen(const char* str);
+ssize_t kstrlen(const char* str);
 
 #endif

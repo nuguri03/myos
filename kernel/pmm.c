@@ -1,4 +1,4 @@
-#include "pmm.h"
+#include "kernel/pmm.h"
 
 #define BITMAP_INDEX(page) ((page) / 32)
 #define BITMAP_OFFSET(page) ((page) % 32)

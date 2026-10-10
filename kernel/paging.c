@@ -1,4 +1,4 @@
-#include "paging.h"
+#include "kernel/paging.h"
 
 #define PAGE_PRESENT     (1 << 0)
 #define PAGE_WRITABLE    (1 << 1)
