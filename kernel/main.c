@@ -112,7 +112,15 @@ void main() {
                         (u32)found, (u32)result);
 
             unmap_page((void*)b);
-            free_page(phys);
+            if (free_page(phys + 4)) serial_printf("free_page phys+4 success\n");
+            else serial_printf("free_page phys+4 failed\n");
+
+            if (free_page(phys)) serial_printf("free_page phys success\n");
+            else serial_printf("free_page phys failed\n");
+
+            if (free_page(phys)) serial_printf("free_page phys again success\n");
+            else serial_printf("free_page phys again failed\n");
+
         } else {
             serial_printf("mapping failed\n");
         }

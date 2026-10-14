@@ -65,9 +65,26 @@ void* alloc_page() {
     return NULL;
 }
 
-void free_page(void* page) {
+bool free_page(void* page) {
+    if (page == NULL) {
+        return false;
+    }
+
+    if (((u32)page & 0xFFF) != 0) {
+        return false; // 주소가 4KB 정렬되지 않음
+    }
+
     u32 idx = (u32)page >> 12;
+    if (idx >= total_pages) {
+        return false; // 범위 초과
+    }
+
+    if (!bitmap_test(idx)) {
+        return false; // 이미 free 상태
+    }
+
     bitmap_clear(idx);
+    return true;
 }
 
 void reserve_region(u32 start, u32 end) {
