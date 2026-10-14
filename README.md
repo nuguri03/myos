@@ -38,7 +38,7 @@ make run
   - Paging — 가상 주소 공간, CR3/CR0 설정
   - Heap Allocator (`malloc` / `free`)
 
-- [ ] **6. Standard Library**
+- [x] **6. Standard Library**
   - `string.h` — `memcpy`, `memset`, `strcmp`, `strlen`
   - `stdlib.h` — 기본 유틸리티
 

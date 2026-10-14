@@ -3,6 +3,7 @@
 #include "kernel/isr.h"
 #include "kernel/pic.h"
 #include "kstdio.h"
+#include "driver/serial.h"
 
 static irq_handler_t irq_handlers[16];
 
@@ -64,6 +65,10 @@ void isr_handler(struct registers *regs) {
     // CPU 예외
     if (regs->int_no < 32) {
         kprintf("\n[EXCEPTIONS] %s (Error Code: %u)\n", 
+            interrupt_messages[regs->int_no],
+            regs->error_code);
+        
+        serial_printf("\n[EXCEPTIONS] %s (Error Code: %u)\n", 
             interrupt_messages[regs->int_no],
             regs->error_code);
 

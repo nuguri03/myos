@@ -1,12 +1,91 @@
+// virtual_address -> page_directory -> page_table -> physical_address
 #include "kernel/paging.h"
-
-#define PAGE_PRESENT     (1 << 0)
-#define PAGE_WRITABLE    (1 << 1)
 
 #define PAGE_TABLE_COUNT 5  // 5개 * 4MB = 20MB identity map
 
 static u32 page_directory[1024] __attribute__((aligned(4096)));
 static u32 page_table[PAGE_TABLE_COUNT][1024] __attribute__((aligned(4096)));
+
+/* TLB 무효화 */
+static inline void invlpg(void* addr) {
+    __asm__ volatile(
+        "invlpg (%0)"
+        :
+        : "r"(addr)
+        : "memory"
+    );
+}
+
+bool map_page(void* virtual_addr, void* physical_addr, u32 flags) {
+    u32 virt = (u32)virtual_addr;
+    u32 phys = (u32)physical_addr;
+
+    if ((virt & 0xFFF) != 0 || (phys & 0xFFF) != 0) {
+        return false; // 주소가 4KB 정렬되지 않음
+    }
+
+    u32 pd_index = virt >> 22;
+    u32 pt_index = (virt >> 12) & 0x3FF;
+
+    if (pd_index >= PAGE_TABLE_COUNT) {
+        return false; // 20MB 이상 영역은 지원하지 않음
+    }
+
+    page_table[pd_index][pt_index] = phys | PAGE_PRESENT | flags;
+    if (flags & PAGE_USER) {
+        page_directory[pd_index] |= PAGE_USER;
+    }
+
+    invlpg(virtual_addr); // TLB 무효화
+
+    return true;
+}
+
+bool unmap_page(void* virtual_addr) {
+    u32 virt = (u32)virtual_addr;
+
+    if ((virt & 0xFFF) != 0) {
+        return false; // 주소가 4KB 정렬되지 않음
+    }
+
+    u32 pd_index = virt >> 22;
+    u32 pt_index = (virt >> 12) & 0x3FF;
+
+    if (pd_index >= PAGE_TABLE_COUNT) {
+        return false; // 20MB 이상 영역은 지원하지 않음
+    }
+
+    page_table[pd_index][pt_index] = 0; // 엔트리 제거
+
+    invlpg(virtual_addr); // TLB 무효화
+
+    return true;
+}
+
+bool translate_address(void* virtual_addr, void** physical_addr) {
+    if (physical_addr == NULL) {
+        return false; // NULL 포인터 처리
+    }
+
+    u32 virt = (u32)virtual_addr;
+    u32 pd_index = virt >> 22;
+    u32 pt_index = (virt >> 12) & 0x3FF;
+    u32 offset = virt & 0xFFF;
+
+    if (pd_index >= PAGE_TABLE_COUNT) {
+        return false; // 20MB 이상 영역은 지원하지 않음
+    }
+    
+    if ((page_directory[pd_index] & PAGE_PRESENT) && (page_table[pd_index][pt_index] & PAGE_PRESENT)) {
+        u32 entry = page_table[pd_index][pt_index];
+        u32 phys_base = entry & 0xFFFFF000;
+
+        *physical_addr = (void*)(phys_base + offset);
+        return true;
+    } else {
+        return false; // 매핑되지 않은 주소
+    }
+}
 
 void init_paging() {
     // PD 전체를 not-present로 초기화
@@ -24,6 +103,7 @@ void init_paging() {
 
         // PD[t]에 t번째 page table의 물리 주소 등록
         page_directory[t] = (u32)page_table[t] | PAGE_PRESENT | PAGE_WRITABLE;
+        
     }
 
     // CR3에 page directory 물리 주소 로드

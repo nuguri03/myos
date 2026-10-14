@@ -117,7 +117,7 @@ protected_mode_entry:
 
     ; 스택 포인터와, 베이스 포인터의 위치를 0x90000으로 하고,
     ; 스택은 밑으로 내려가는 방향으로
-    mov esp, 0x90000
+    mov esp, 0x01400000
 
     ; 커널을 부름
     call main

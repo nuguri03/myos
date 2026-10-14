@@ -11,7 +11,10 @@ struct e820_entry {
 } __attribute__((packed));
 
 void* alloc_page();
-void free_page(void* page);
+bool free_page(void* page);
+
+// [start, end) 영역을 used로 마킹
+void reserve_region(u32 start, u32 end);
 
 void init_pmm(struct e820_entry* map, u32 count, u32 kernel_start, u32 kernel_end);
 
