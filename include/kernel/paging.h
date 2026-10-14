@@ -14,4 +14,6 @@ void init_paging();
 bool map_page(void* virtual_addr, void* physical_addr, u32 flags);
 bool unmap_page(void* virtual_addr);
 
+bool translate_address(void* virtual_addr, void** physical_addr);
+
 #endif

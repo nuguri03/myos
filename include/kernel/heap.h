@@ -9,7 +9,7 @@
 // 1MiB 아래의 BIOS/VGA 등 예약 영역과 커널 메모리를 피한다.
 #define HEAP_START ((KERNEL_END_ALIGNED) < 0x00100000u ? 0x00100000u : KERNEL_END_ALIGNED)
 // stack이 0x01400000 ~ 0x013F0000 사이에 위치하므로, heap은 그보다 낮은 주소에 위치해야 함
-#define HEAP_END    0x013F0000
+#define HEAP_END    0x013EE000u
 
 #define HEADER_SIZE sizeof(struct block_header)
 

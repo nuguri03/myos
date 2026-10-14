@@ -59,6 +59,31 @@ bool unmap_page(void* virtual_addr) {
     return true;
 }
 
+bool translate_address(void* virtual_addr, void** physical_addr) {
+    if (physical_addr == NULL) {
+        return false; // NULL 포인터 처리
+    }
+
+    u32 virt = (u32)virtual_addr;
+    u32 pd_index = virt >> 22;
+    u32 pt_index = (virt >> 12) & 0x3FF;
+    u32 offset = virt & 0xFFF;
+
+    if (pd_index >= PAGE_TABLE_COUNT) {
+        return false; // 20MB 이상 영역은 지원하지 않음
+    }
+    
+    if ((page_directory[pd_index] & PAGE_PRESENT) && (page_table[pd_index][pt_index] & PAGE_PRESENT)) {
+        u32 entry = page_table[pd_index][pt_index];
+        u32 phys_base = entry & 0xFFFFF000;
+
+        *physical_addr = (void*)(phys_base + offset);
+        return true;
+    } else {
+        return false; // 매핑되지 않은 주소
+    }
+}
+
 void init_paging() {
     // PD 전체를 not-present로 초기화
     for (u32 i = 0; i < 1024; i++) {

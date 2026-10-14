@@ -43,17 +43,17 @@ void main() {
     serial_printf("HEAP good\n");
 
     // heap test
-    int *a = (int *)kmalloc(sizeof(int));
-    *a = 42;
-    if (a) {
+    int *malloc_test = (int *)kmalloc(sizeof(int));
+    if (malloc_test != NULL) {
+        *malloc_test = 42;
         serial_printf("malloc good\n");
-        
-        kfree(a);
+
+        kfree(malloc_test);
         serial_printf("free good\n");
-    }
-    else {
+    } else {
         serial_printf("malloc BADDDD\n");
     }
+    
     // heap overlap test
     // u32 heap_start = ((u32)&_kernel_end + 0xFFF) & ~0xFFF;
     // u32 heap_end = 0x01400000;
@@ -82,6 +82,41 @@ void main() {
     // if (!overlap) {
     //     serial_kprintf("PASS: no heap overlap, pages=%u\n", allocated);
     // }
+
+    // test(paging): verify shared mappings and page cleanup
+    reserve_region(0x013EE000, 0x013F0000);
+    void *phys = alloc_page();
+
+    if (phys != NULL) {
+        volatile u32 * a = (volatile u32*)0x013EE000;
+        volatile u32 * b = (volatile u32*)0x013EF000;
+
+        bool mapped_a = map_page((void*)a, phys, PAGE_WRITABLE);
+        bool mapped_b = map_page((void*)b, phys, PAGE_WRITABLE);
+
+        if (mapped_a && mapped_b) {
+            *a = 123;
+            serial_printf("phys=%x a=%u, b=%u\n", phys, *a, *b);
+
+            void *translated;
+            translate_address((void*)a + 4, (&translated));
+            serial_printf("phys after translate a+4=%x\n", (u32)translated);
+
+            unmap_page((void*)a);
+            serial_printf("b after unmap a, b=%u\n", *b);
+                        
+            void* result = (void*)0xDEADBEEF;
+            bool found = translate_address((void*)a, &result);
+
+            serial_printf("found=%u result=%x\n",
+                        (u32)found, (u32)result);
+
+            unmap_page((void*)b);
+            free_page(phys);
+        } else {
+            serial_printf("mapping failed\n");
+        }
+    }
 
     // GDT/IDT
     init_gdt();
