@@ -32,6 +32,9 @@ bool map_page(void* virtual_addr, void* physical_addr, u32 flags) {
     }
 
     page_table[pd_index][pt_index] = phys | PAGE_PRESENT | flags;
+    if (flags & PAGE_USER) {
+        page_directory[pd_index] |= PAGE_USER;
+    }
 
     invlpg(virtual_addr); // TLB 무효화
 
@@ -100,6 +103,7 @@ void init_paging() {
 
         // PD[t]에 t번째 page table의 물리 주소 등록
         page_directory[t] = (u32)page_table[t] | PAGE_PRESENT | PAGE_WRITABLE;
+        
     }
 
     // CR3에 page directory 물리 주소 로드
