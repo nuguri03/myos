@@ -1,6 +1,8 @@
-# 일단 대가리 박고 시작하는 커널 만들기
+# 일단 대가리 박고 시작하는 커널(운영체제) 만들기
 
-> 만들다보면 이해가 가겠지~
+> 만들다보면 이해가 가겠지~ (26.05.01)
+>
+> 내가 얼마나 멍청한지 알려주는 플젝 (26.10.17)
 
 ## 실행하는 법
 ```
@@ -13,50 +15,11 @@ make run
 ![alt text](docs/linux_kernel_diagram.png)
 > 최대한 되는대로 다 구현해보는게 목표
 
-## 개발 과정
+## 개발 현황
 
-- [x] **1. Booting & Basic Output**
-  - Bootloader setup
-  - Basic Video (VGA Text Mode)
+> 부팅, 인터럽트, 기본 드라이버, 메모리 관리와 커널 라이브러리
+> 
+> 현재 커널 스레드 작업 중
 
-- [x] **2. Low-Level Architecture**
-  - I/O port communication (`inb`, `outb`, `io_wait`)
-  - GDT (Global Descriptor Table) initialization
-
-- [x] **3. Interrupt Management**
-  - IDT (Interrupt Descriptor Table) setup
-  - ISR (Interrupt Service Routines)
-  - 8259A PIC (Programmable Interrupt Controller) Remapping
-
-- [x] **4. Hardware Drivers**
-  - PIT (Programmable Interval Timer) — 주기적 타이머 인터럽트
-  - Keyboard Driver — 스캔코드 처리, 키맵 변환
-  - Serial Port (UART) — 디버깅용 출력
-
-- [x] **5. Memory Management**
-  - Physical Memory Manager — 페이지 프레임 할당
-  - Paging — 가상 주소 공간, CR3/CR0 설정
-  - Heap Allocator (`malloc` / `free`)
-
-- [x] **6. Standard Library**
-  - `string.h` — `memcpy`, `memset`, `strcmp`, `strlen`
-  - `stdlib.h` — 기본 유틸리티
-
-- [ ] **7. Process Management**
-  - TSS (Task State Segment) — 커널/유저 스택 전환
-  - Task Structure — 프로세스 상태, 레지스터 저장
-  - Context Switching — 태스크 전환 메커니즘
-  - Scheduler — Round Robin 스케줄링
-
-- [ ] **8. User Space**
-  - System Call Interface — `int 0x80` 기반
-  - Ring 3 전환 — 커널/유저 모드 분리
-  - ELF Loader — 실행 파일 로딩
-
-- [ ] **9. File System**
-  - VFS (Virtual File System) — 추상화 레이어
-  - FAT32 또는 ext2 구현
-
-- [ ] **10. Shell**
-  - 기본 명령어 파싱
-  - 프로세스 실행
+- [개발 과정 및 구현 계획](docs/development.md)
+- [알려진 문제 및 개선 과제](https://github.com/nuguri03/myos/issues)
