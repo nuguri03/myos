@@ -72,7 +72,7 @@ void main() {
     
     __asm__ volatile("sti");
 
-    serial_printf("kernel is working....\n");
+    serial_printf("\nkernel is working....\n");
 
     while (1) {
         char c = keyboard_getchar();
