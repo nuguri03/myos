@@ -4,6 +4,7 @@
 #include "kernel/paging.h"
 #include "kernel/pmm.h"
 #include "kernel/heap.h"
+#include "kernel/thread.h"
 
 // driver
 #include "driver/serial.h"
@@ -51,8 +52,9 @@ void main() {
     
     // device
     init_pit(1000);
+    serial_printf("PIT ok\n");
     init_keyboard();
-    serial_printf("device ok\n");
+    serial_printf("KEYBOARD ok\n");
 
     clear_vga();
 
@@ -67,8 +69,11 @@ void main() {
     
     // serial_printf("--------------test--------------\n");
     // test_page_fault(); // warning: cause interrupt
+    
+    serial_printf("--------------test--------------\n");
+    test_thread();
 
-    // serial_printf("--------------------------------\n");
+    serial_printf("--------------------------------\n");
     
     __asm__ volatile("sti");
 
