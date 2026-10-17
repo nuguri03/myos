@@ -173,19 +173,24 @@ static void worker_entry() {
     while (1) {
         serial_printf("worker: %u\n", ++count);
 
-        context_switch(&worker_thread.esp, main_thread.esp);
+        yield();
     }
 }
 
 void test_thread() {
+    init_thread_system(&main_thread);
+
     if (!init_thread(&worker_thread, worker_entry)) {
         serial_printf("FAIL: thread init");
     }
 
+    main_thread.next = &worker_thread;
+    worker_thread.next = &main_thread;
+
     for (u32 i = 1; i <= 3; i++) {
         serial_printf("main: %u\n", i);
 
-        context_switch(&main_thread.esp, worker_thread.esp);
+        yield();
     }
 
     serial_printf("PASS: thread switch finished\n");

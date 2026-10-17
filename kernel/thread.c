@@ -3,6 +3,14 @@
 
 #define THREAD_STACK_SIZE 4096
 
+static struct thread* current_thread = NULL;
+
+void init_thread_system(struct thread* boot_thread) {
+    boot_thread->stack_base = NULL;
+    boot_thread->next = boot_thread;
+    current_thread = boot_thread;
+}
+
 bool init_thread(struct thread* thread, void (*entry)(void)) {
     if (thread == NULL || entry == NULL) {
         return false;
@@ -30,4 +38,16 @@ bool init_thread(struct thread* thread, void (*entry)(void)) {
     thread->esp = (u32)sp;
 
     return true;
+}
+
+void yield() {
+    struct thread* prev = current_thread;
+    struct thread* next = prev->next;
+
+    if (prev == next) {
+        return;
+    }
+
+    current_thread = next;
+    context_switch(&prev->esp, next->esp);
 }
