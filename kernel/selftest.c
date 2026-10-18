@@ -167,31 +167,58 @@ void test_kprintf() {
 static struct task_struct main_task;
 static struct task_struct worker_task;
 
-static i32 work(void *data) {
-    u32 count = 0;
+static i32 worker_entry(void* data) {
+    u32* value = (u32*)data;
 
-    while (1) {
-        serial_printf("worker: %u\n", ++count);
-        yield();
-    }
-
-    return 0;
+    serial_printf("worker data: %u\n", *value);
+    return 42;
 }
 
-void test_thread() {
+void test_thread(void) {
     sched_init(&main_task);
 
-    if (!kthread_create(&worker_task, work, NULL)) {
-        serial_printf("FAIL: create thread\n");
+    static u32 worker_data = 123;
+
+    if (!kthread_create(&worker_task, worker_entry, &worker_data)) {
+        serial_printf("FAIL: kthread_create\n");
+        return;
     }
 
     main_task.next = &worker_task;
     worker_task.next = &main_task;
 
-    for (u32 i = 1; i <= 3; i++) {
-        serial_printf("main: %u\n", i);
-        yield();
+    serial_printf("main: before yield\n");
+    yield();
+    serial_printf("main: resumed\n");
+
+    bool passed = true;
+
+    if (!worker_task.exited || worker_task.exit_code != 42) {
+        serial_printf("FAIL: worker exit state or code\n");
+        passed = false;
     }
 
-    serial_printf("PASS: thread switch finished\n");
+    if (main_task.next != &main_task) {
+        serial_printf("FAIL: worker still linked\n");
+        passed = false;
+    }
+
+    // 실행 목록에서 제거됐음을 확인한 뒤 회수
+    if (main_task.next == &main_task) {
+        if (!kthread_reap(&worker_task)) {
+            serial_printf("FAIL: worker stack cleanup\n");
+            passed = false;
+        } else {
+            serial_printf("worker stack reclaimed\n");
+
+            if (kthread_reap(&worker_task)) {
+                serial_printf("FAIL: accepted repeated reap\n");
+                passed = false;
+            }
+        }
+    }
+
+    if (passed) {
+        serial_printf("PASS: thread exit and cleanup\n");
+    }
 }
