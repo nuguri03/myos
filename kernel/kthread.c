@@ -3,10 +3,40 @@
 #include "kernel/kfree.h"
 
 #define THREAD_STACK_SIZE 4096
+#define TIME_SLICE_TICKS    10
 
 static struct task_struct* current = NULL;
 
+// 기존 EFLAGS를 읽어 보관한 뒤 IF=0으로 설정
+static inline u32 irq_save() {
+    u32 flags;
+
+    __asm__ volatile(
+        "pushfl\n\t"
+        "popl %0\n\t"
+        "cli"
+        : "=r"(flags)
+        :
+        : "memory"
+    );
+
+    return flags;
+}
+
+// 보관했던 EFLAGS를 복원
+static inline void irq_restore(u32 flags) {
+    __asm__ volatile(
+        "pushl %0\n\t"
+        "popfl"
+        :
+        : "r"(flags)
+        : "memory", "cc"
+    );
+}
+
 static __attribute__((noreturn)) void kthread() {
+    __asm__ volatile("sti" ::: "memory");
+
     i32 ret = current->threadfn(current->data);
     kthread_exit(ret);
 }
@@ -53,6 +83,8 @@ bool kthread_create(struct task_struct* task, i32 (*threadfn)(void*), void* data
 }
 
 void kthread_exit(i32 result) {
+    __asm__ volatile("cli" ::: "memory");
+
     struct task_struct* dead = current;
 
     dead->exit_code = result;
@@ -102,13 +134,34 @@ bool kthread_reap(struct task_struct* task) {
 }
 
 void yield() {
+    u32 flags = irq_save();
+
     struct task_struct* prev = current;
     struct task_struct* next = prev->next;
 
     if (prev == next) {
+        irq_restore(flags);
         return;
     }
 
     current = next;
     context_switch(&prev->esp, next->esp);
+    irq_restore(flags);
+}
+
+void scheduler_tick() {
+    if (current == NULL) {
+        return;
+    }
+
+    static u32 sched_tick = 0;
+
+    sched_tick++;
+    if (sched_tick < TIME_SLICE_TICKS) {
+        return;
+    }
+
+    sched_tick = 0;
+    yield();
+    return;
 }

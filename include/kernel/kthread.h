@@ -30,4 +30,6 @@ bool kthread_reap(struct task_struct* task);
 
 void yield();
 
+void scheduler_tick();
+
 #endif

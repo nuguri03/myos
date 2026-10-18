@@ -3,10 +3,11 @@
 #include "kernel/heap.h"
 #include "kernel/pmm.h"
 #include "kernel/paging.h"
+#include "kernel/kthread.h"
 
+#include "driver/pit.h"
 #include "driver/serial.h"
 
-#include "kernel/kthread.h"
 #include "kstdio.h"
 #include "kstdlib.h"
 #include "lib/kstring.h"
@@ -235,5 +236,87 @@ void test_thread(void) {
 
     if (passed) {
         serial_printf("PASS: thread exit and cleanup\n");
+    }
+}
+
+static volatile u32 counter_a;
+static volatile u32 counter_b;
+
+static i32 preempt_worker_a(void* data) {
+    (void)data;
+
+    for (;;) {
+        counter_a++;
+    }
+}
+
+static i32 preempt_worker_b(void* data) {
+    (void)data;
+
+    for (;;) {
+        counter_b++;
+    }
+}
+
+void test_preemption(void) {
+    __asm__ volatile("cli" ::: "memory");
+
+    static struct task_struct main_task;
+    static struct task_struct worker_a;
+    static struct task_struct worker_b;
+
+    sched_init(&main_task);
+
+    if (!kthread_create(&worker_a, preempt_worker_a, NULL)) {
+        serial_printf("[FAIL] worker A creation\n");
+        for (;;) {
+            __asm__ volatile("cli; hlt");
+        }
+    }
+
+    if (!kthread_create(&worker_b, preempt_worker_b, NULL)) {
+        serial_printf("[FAIL] worker B creation\n");
+        for (;;) {
+            __asm__ volatile("cli; hlt");
+        }
+    }
+
+    // main -> A -> B -> main
+    main_task.next = &worker_a;
+    worker_a.next = &worker_b;
+    worker_b.next = &main_task;
+
+    counter_a = 0;
+    counter_b = 0;
+
+    u32 last_tick = pit_get_ticks();
+    u32 prev_a = 0;
+    u32 prev_b = 0;
+
+    serial_printf("[TEST] preemption: workers never call yield()\n");
+
+    for (;;) {
+        // 상태 확인과 출력을 끝낸 뒤 sti; hlt로 인터럽트를 허용한다.
+        __asm__ volatile("cli" ::: "memory");
+
+        u32 now = pit_get_ticks();
+
+        // PIT 1000Hz 기준 약 1초마다 확인
+        if ((u32)(now - last_tick) >= 1000) {
+            u32 a = counter_a;
+            u32 b = counter_b;
+
+            serial_printf(
+                "A=%u (+%u), B=%u (+%u)\n",
+                a, (u32)(a - prev_a),
+                b, (u32)(b - prev_b)
+            );
+
+            prev_a = a;
+            prev_b = b;
+            last_tick = now;
+        }
+
+        __asm__ volatile("sti; hlt" ::: "memory");
     }
 }

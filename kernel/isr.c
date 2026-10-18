@@ -1,6 +1,7 @@
 /* ISR = Interrupt Service Routine */
 
 #include "kernel/isr.h"
+#include "kernel/kthread.h"
 #include "kernel/pic.h"
 #include "kstdio.h"
 #include "driver/serial.h"
@@ -86,5 +87,9 @@ void isr_handler(struct registers *regs) {
         }
 
         pic_send_eoi(regs->int_no);
+        
+        if (irq == 0) {
+            scheduler_tick();
+        }
     }
 }

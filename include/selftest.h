@@ -1,8 +1,6 @@
 #ifndef SELFTEST_H
 #define SELFTEST_H
 
-#include "types.h"
-
 // heap
 void test_heap();
 void test_heap_overlap();
@@ -22,5 +20,8 @@ void test_kprintf();
 
 // thread
 void test_thread();
+
+// scheduler
+void test_preemption();
 
 #endif
