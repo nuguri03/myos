@@ -4,11 +4,9 @@
 
 #define THREAD_STACK_SIZE 4096
 
-static void kthread(void) __attribute__((noreturn));
-
 static struct task_struct* current = NULL;
 
-static void kthread() {
+static __attribute__((noreturn)) void kthread() {
     i32 ret = current->threadfn(current->data);
     kthread_exit(ret);
 }
@@ -60,6 +58,7 @@ void kthread_exit(i32 result) {
     dead->exit_code = result;
     dead->exited = true;
 
+    // lastest task dead -> STOP CPU
     if (dead->next == dead) {
         for (;;) {
             __asm__ volatile("cli; hlt");
@@ -72,7 +71,6 @@ void kthread_exit(i32 result) {
     }
 
     struct task_struct* next = dead->next;
-
 
     prev->next = next;
     

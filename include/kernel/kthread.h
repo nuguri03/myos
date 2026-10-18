@@ -15,7 +15,7 @@ struct task_struct {
     bool exited;
 };
 
-// 
+// 현재 태스크의 실행 상태를 저장하고 다음 태스크의 실행 상태를 복원하여 전환
 void context_switch(u32* old_esp, u32 new_esp);
 
 // 기존 부팅 실행 흐름을 현재 태스크로 등록하고 실행 목록을 초기화하는 역할
