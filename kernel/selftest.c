@@ -6,7 +6,7 @@
 
 #include "driver/serial.h"
 
-#include "kernel/thread.h"
+#include "kernel/kthread.h"
 #include "kstdio.h"
 #include "kstdlib.h"
 #include "lib/kstring.h"
@@ -164,32 +164,32 @@ void test_kprintf() {
     __asm__ volatile("int $0x03");
 }
 
-static struct thread main_thread;
-static struct thread worker_thread;
+static struct task_struct main_task;
+static struct task_struct worker_task;
 
-static void worker_entry() {
+static i32 work(void *data) {
     u32 count = 0;
 
     while (1) {
         serial_printf("worker: %u\n", ++count);
-
         yield();
     }
+
+    return 0;
 }
 
 void test_thread() {
-    init_thread_system(&main_thread);
+    sched_init(&main_task);
 
-    if (!init_thread(&worker_thread, worker_entry)) {
-        serial_printf("FAIL: thread init");
+    if (!kthread_create(&worker_task, work, NULL)) {
+        serial_printf("FAIL: create thread\n");
     }
 
-    main_thread.next = &worker_thread;
-    worker_thread.next = &main_thread;
+    main_task.next = &worker_task;
+    worker_task.next = &main_task;
 
     for (u32 i = 1; i <= 3; i++) {
         serial_printf("main: %u\n", i);
-
         yield();
     }
 

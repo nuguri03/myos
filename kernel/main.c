@@ -4,7 +4,7 @@
 #include "kernel/paging.h"
 #include "kernel/pmm.h"
 #include "kernel/heap.h"
-#include "kernel/thread.h"
+#include "kernel/kthread.h"
 
 // driver
 #include "driver/serial.h"

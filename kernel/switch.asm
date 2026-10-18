@@ -13,8 +13,8 @@ context_switch:
     mov [eax], esp      ; 그 변수에 현재 ESP 저장
     mov ebx, [esp + 24] ; 다음 스레드의 저장된 ESP 값 (new_esp)
     mov esp, ebx        ; 다음 스레드의 스택으로 전환
-    pop edi
 
+    pop edi
     pop esi
     pop ebx
     pop ebp
