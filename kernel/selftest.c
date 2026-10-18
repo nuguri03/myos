@@ -168,28 +168,41 @@ static struct task_struct main_task;
 static struct task_struct worker_task;
 
 static i32 worker_entry(void* data) {
-    u32* value = (u32*)data;
+    u32* shared = (u32*)data;
 
-    serial_printf("worker data: %u\n", *value);
+    for (u32 i = 1; i <= 3; i++) {
+        *shared += 1;
+        serial_printf("worker: %u, data=%u\n", i, *shared);
+        yield();
+    }
+
     return 42;
 }
 
 void test_thread(void) {
     sched_init(&main_task);
 
-    static u32 worker_data = 123;
+    u32* shared = kmalloc(sizeof(u32));
+    if (shared == NULL) {
+        return;
+    }
 
-    if (!kthread_create(&worker_task, worker_entry, &worker_data)) {
+    *shared = 123;
+
+    if (!kthread_create(&worker_task, worker_entry, shared)) {
         serial_printf("FAIL: kthread_create\n");
+        kfree(shared);
         return;
     }
 
     main_task.next = &worker_task;
     worker_task.next = &main_task;
 
-    serial_printf("main: before yield\n");
-    yield();
-    serial_printf("main: resumed\n");
+    while (!worker_task.exited) {
+        *shared += 1;
+        serial_printf("main: %u\n", *shared);
+        yield();
+    }
 
     bool passed = true;
 
@@ -217,6 +230,8 @@ void test_thread(void) {
             }
         }
     }
+
+    kfree(shared);
 
     if (passed) {
         serial_printf("PASS: thread exit and cleanup\n");
