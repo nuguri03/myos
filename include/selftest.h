@@ -20,4 +20,7 @@ void test_kstrcmp();
 // print kernel
 void test_kprintf();
 
+// thread
+void test_thread();
+
 #endif

@@ -6,6 +6,7 @@
 
 #include "driver/serial.h"
 
+#include "kernel/kthread.h"
 #include "kstdio.h"
 #include "kstdlib.h"
 #include "lib/kstring.h"
@@ -161,4 +162,78 @@ void test_kprintf() {
     char* msg = "Hello Kernel!";
     kprintf("%s\n%x\n", msg, 125);
     __asm__ volatile("int $0x03");
+}
+
+static struct task_struct main_task;
+static struct task_struct worker_task;
+
+static i32 worker_entry(void* data) {
+    u32* shared = (u32*)data;
+
+    for (u32 i = 1; i <= 3; i++) {
+        *shared += 1;
+        serial_printf("worker: %u, data=%u\n", i, *shared);
+        yield();
+    }
+
+    return 42;
+}
+
+void test_thread(void) {
+    sched_init(&main_task);
+
+    u32* shared = kmalloc(sizeof(u32));
+    if (shared == NULL) {
+        return;
+    }
+
+    *shared = 123;
+
+    if (!kthread_create(&worker_task, worker_entry, shared)) {
+        serial_printf("FAIL: kthread_create\n");
+        kfree(shared);
+        return;
+    }
+
+    main_task.next = &worker_task;
+    worker_task.next = &main_task;
+
+    while (!worker_task.exited) {
+        *shared += 1;
+        serial_printf("main: %u\n", *shared);
+        yield();
+    }
+
+    bool passed = true;
+
+    if (!worker_task.exited || worker_task.exit_code != 42) {
+        serial_printf("FAIL: worker exit state or code\n");
+        passed = false;
+    }
+
+    if (main_task.next != &main_task) {
+        serial_printf("FAIL: worker still linked\n");
+        passed = false;
+    }
+
+    // 실행 목록에서 제거됐음을 확인한 뒤 회수
+    if (main_task.next == &main_task) {
+        if (!kthread_reap(&worker_task)) {
+            serial_printf("FAIL: worker stack cleanup\n");
+            passed = false;
+        } else {
+            serial_printf("worker stack reclaimed\n");
+
+            if (kthread_reap(&worker_task)) {
+                serial_printf("FAIL: accepted repeated reap\n");
+                passed = false;
+            }
+        }
+    }
+
+    kfree(shared);
+
+    if (passed) {
+        serial_printf("PASS: thread exit and cleanup\n");
+    }
 }
