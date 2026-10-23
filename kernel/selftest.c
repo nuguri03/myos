@@ -244,18 +244,24 @@ static volatile u32 counter_b;
 
 static i32 preempt_worker_a(void* data) {
     (void)data;
+    u32 start = pit_get_ticks();
 
-    for (;;) {
+    while ((u32)(pit_get_ticks() - start) < 2000) {
         counter_a++;
     }
+
+    return 11;
 }
 
 static i32 preempt_worker_b(void* data) {
     (void)data;
+    u32 start = pit_get_ticks();
 
-    for (;;) {
+    while ((u32)(pit_get_ticks() - start) < 3000) {
         counter_b++;
     }
+
+    return 22;
 }
 
 void test_preemption(void) {
@@ -289,32 +295,69 @@ void test_preemption(void) {
     counter_a = 0;
     counter_b = 0;
 
-    u32 last_tick = pit_get_ticks();
-    u32 prev_a = 0;
-    u32 prev_b = 0;
+    bool reaped_a = false;
+    bool reaped_b = false;
+    bool both_reaped = false;
+    bool finished = false;
 
-    serial_printf("[TEST] preemption: workers never call yield()\n");
+    u32 last_tick = pit_get_ticks();
+    u32 reaped_tick = 0;
+
+    serial_printf("[TEST] preemption, exit and reap\n");
 
     for (;;) {
-        // 상태 확인과 출력을 끝낸 뒤 sti; hlt로 인터럽트를 허용한다.
         __asm__ volatile("cli" ::: "memory");
 
         u32 now = pit_get_ticks();
 
-        // PIT 1000Hz 기준 약 1초마다 확인
-        if ((u32)(now - last_tick) >= 1000) {
-            u32 a = counter_a;
-            u32 b = counter_b;
+        if (!reaped_a && worker_a.exited) {
+            i32 result = worker_a.exit_code;
+            reaped_a = kthread_reap(&worker_a);
 
             serial_printf(
-                "A=%u (+%u), B=%u (+%u)\n",
-                a, (u32)(a - prev_a),
-                b, (u32)(b - prev_b)
+                "A: exit=%d, reap=%u\n",
+                result, (u32)reaped_a
             );
+        }
 
-            prev_a = a;
-            prev_b = b;
+        if (!reaped_b && worker_b.exited) {
+            i32 result = worker_b.exit_code;
+            reaped_b = kthread_reap(&worker_b);
+
+            serial_printf(
+                "B: exit=%d, reap=%u\n",
+                result, (u32)reaped_b
+            );
+        }
+
+        if ((u32)(now - last_tick) >= 1000) {
+            serial_printf(
+                "ticks=%u, A=%u, B=%u\n",
+                now, counter_a, counter_b
+            );
             last_tick = now;
+        }
+
+        if (!both_reaped && reaped_a && reaped_b) {
+            both_reaped = true;
+            reaped_tick = now;
+        }
+
+        // 두 스택을 회수한 뒤에도 약 1초간 타이머가 동작하는지 확인
+        if (both_reaped && !finished &&
+            (u32)(now - reaped_tick) >= 1000) {
+            bool passed =
+                worker_a.exit_code == 11 &&
+                worker_b.exit_code == 22 &&
+                worker_a.stack_base == NULL &&
+                worker_b.stack_base == NULL &&
+                main_task.next == &main_task;
+
+            serial_printf(
+                "[%s] exit codes, stack cleanup, main-only timer\n",
+                passed ? "PASS" : "FAIL"
+            );
+            finished = true;
         }
 
         __asm__ volatile("sti; hlt" ::: "memory");
