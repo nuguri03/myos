@@ -1,21 +1,17 @@
 #include "kernel/kthread.h"
+#include "kernel/scheduler.h"
 #include "kernel/kmalloc.h"
 #include "kernel/kfree.h"
 
 #define THREAD_STACK_SIZE 4096
 
-static struct task_struct* current = NULL;
-
 static __attribute__((noreturn)) void kthread() {
+    __asm__ volatile("sti" ::: "memory");
+
+    struct task_struct* current = get_sched_current();
+
     i32 ret = current->threadfn(current->data);
     kthread_exit(ret);
-}
-
-void sched_init(struct task_struct* boot_task) {
-    boot_task->stack_base = NULL;
-    boot_task->next = boot_task;
-    boot_task->exited = false;
-    current = boot_task;
 }
 
 bool kthread_create(struct task_struct* task, i32 (*threadfn)(void*), void* data) {
@@ -53,38 +49,18 @@ bool kthread_create(struct task_struct* task, i32 (*threadfn)(void*), void* data
 }
 
 void kthread_exit(i32 result) {
-    struct task_struct* dead = current;
+    __asm__ volatile("cli" ::: "memory");
+
+    struct task_struct* dead = get_sched_current();
 
     dead->exit_code = result;
     dead->exited = true;
 
-    // lastest task dead -> STOP CPU
-    if (dead->next == dead) {
-        for (;;) {
-            __asm__ volatile("cli; hlt");
-        }
-    }
-
-    struct task_struct* prev = dead;
-    while (prev->next != dead) {
-        prev = prev->next;
-    }
-
-    struct task_struct* next = dead->next;
-
-    prev->next = next;
-    
-    current = next;
-    context_switch(&dead->esp, next->esp);
-
-    // 정상적인 흐름에서는 작동하지 않음
-    for (;;) {
-        __asm__ volatile("cli; hlt");
-    }
+    sched_exit();
 }
 
 bool kthread_reap(struct task_struct* task) {
-    if (task == NULL || task == current) {
+    if (task == NULL || task == get_sched_current()) {
         return false;
     }
 
@@ -99,16 +75,4 @@ bool kthread_reap(struct task_struct* task) {
     task->next = NULL;
 
     return true;
-}
-
-void yield() {
-    struct task_struct* prev = current;
-    struct task_struct* next = prev->next;
-
-    if (prev == next) {
-        return;
-    }
-
-    current = next;
-    context_switch(&prev->esp, next->esp);
 }

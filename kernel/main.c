@@ -70,9 +70,12 @@ void main() {
     // serial_printf("--------------test--------------\n");
     // test_page_fault(); // warning: cause interrupt
     
+    // serial_printf("--------------test--------------\n");
+    // test_thread();
+    
     serial_printf("--------------test--------------\n");
-    test_thread();
-
+    test_preemption();
+    
     serial_printf("--------------------------------\n");
     
     __asm__ volatile("sti");
