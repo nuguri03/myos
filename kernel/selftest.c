@@ -362,6 +362,7 @@ void test_preemption(void) {
                 passed ? "PASS" : "FAIL"
             );
             finished = true;
+            return;
         }
 
         __asm__ volatile("sti; hlt" ::: "memory");
