@@ -10,12 +10,12 @@ struct e820_entry {
     u32 acpi;     // ACPI 확장 속성 (대부분 무시)
 } __attribute__((packed));
 
-void* alloc_page();
-bool free_page(void* page);
+void* page_alloc();
+bool page_free(void* page);
 
 // [start, end) 영역을 used로 마킹
 void reserve_region(u32 start, u32 end);
 
-void init_pmm(struct e820_entry* map, u32 count, u32 kernel_start, u32 kernel_end);
+void pmm_init(struct e820_entry* map, u32 count, u32 kernel_start, u32 kernel_end);
 
 #endif

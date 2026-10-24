@@ -31,7 +31,7 @@ void main() {
     // physical memory management
     struct e820_entry* map = (struct e820_entry*)E820_BUF_ADDR;
     u32 count = *(u32*)E820_COUNT_ADDR;
-    init_pmm(map, count, (u32)&_kernel_start, (u32)&_kernel_end);
+    pmm_init(map, count, (u32)&_kernel_start, (u32)&_kernel_end);
     serial_printf("PMM ok\n");
 
     // paging

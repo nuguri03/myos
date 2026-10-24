@@ -37,7 +37,7 @@ void test_heap_overlap() {
     bool overlap = false;
 
     while (1) {
-        void* page = alloc_page();
+        void* page = page_alloc();
         if (page == NULL) {
             break;
         }
@@ -62,7 +62,7 @@ void test_heap_overlap() {
 // verify shared mappings and page cleanup
 void test_paging() {
     reserve_region(0x013EE000, 0x013F0000);
-    void *phys = alloc_page();
+    void *phys = page_alloc();
 
     if (phys != NULL) {
         volatile u32 * a = (volatile u32*)0x013EE000;
@@ -89,13 +89,13 @@ void test_paging() {
                         (u32)found, (u32)result);
 
             unmap_page((void*)b);
-            if (free_page(phys + 4)) serial_printf("free_page phys+4 success\n");
+            if (page_free(phys + 4)) serial_printf("free_page phys+4 success\n");
             else serial_printf("free_page phys+4 failed\n");
 
-            if (free_page(phys)) serial_printf("free_page phys success\n");
+            if (page_free(phys)) serial_printf("free_page phys success\n");
             else serial_printf("free_page phys failed\n");
 
-            if (free_page(phys)) serial_printf("free_page phys again success\n");
+            if (page_free(phys)) serial_printf("free_page phys again success\n");
             else serial_printf("free_page phys again failed\n");
 
         } else {
