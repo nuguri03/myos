@@ -110,21 +110,29 @@ bool page_free(void* page) {
     return true;
 }
 
-void reserve_region(u32 start, u32 end) {
+bool reserve_region(u32 start, u32 end) {
     if (start >= end) {
-        return;
+        return false;
     }
 
     u32 start_page = start / PAGE_SIZE;
     u32 end_page = (u32)(((u64)end + PAGE_SIZE - 1) / PAGE_SIZE);
 
     if (end_page > total_pages) {
-        end_page = total_pages;
+        return false;
+    }
+
+        for (u32 page = start_page; page < end_page; page++) {
+        if (allocated_bitmap_test(page)) {
+            return false;
+        }
     }
 
     for (u32 page = start_page; page < end_page; page++) {
         bitmap_set(page);
     }
+
+    return true;
 }
 
 void pmm_init(struct e820_entry* map, u32 count, u32 kernel_start, u32 kernel_end) {
