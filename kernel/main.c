@@ -24,6 +24,13 @@
 extern u32 _kernel_start;
 extern u32 _kernel_end;
 
+static inline void kernel_panic() {
+    __asm__ volatile("cli" ::: "memory");
+    while (1) {
+        __asm__ volatile("hlt");
+    }
+}
+
 void main() {
     // serial
     init_serial();
@@ -38,11 +45,18 @@ void main() {
     init_paging();
     serial_printf("PAGING ok\n");
     
-    // stack
-    reserve_region(0x013F0000, 0x01400000); // 64KB stack
+    // 64KB stack
+    if (!reserve_region(0x013F0000, 0x01400000)) {
+        serial_printf("STACK initialization failed\n");
+        kernel_panic();
+    }
 
     // heap
-    init_heap();
+    heap_init();
+    if (heap == NULL) {
+        serial_printf("HEAP initialization failed\n");
+        kernel_panic();
+    }
     serial_printf("HEAP ok\n");
 
     // GDT/IDT
