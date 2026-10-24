@@ -17,8 +17,11 @@
 #define MAX_PAGES           (1024 * 1024)        // 4GB(2^32)(32비트 운영체제의 최대 주소 공간) / 4KB(2^12)(4KB 페이지) = 1,048,576(PAGES) = 0x000FFFFF
 #define BITMAP_ARRAY_SIZE   (MAX_PAGES / 32)     // 4GB / 4KB / 32 = 32,768 (하나의 배열 값에 32개의 페이지 상태를 기록하므로 32로 나눔)
 
+static u32 allocated_bitmap_data[BITMAP_ARRAY_SIZE];
 static u32 bitmap_data[BITMAP_ARRAY_SIZE];
+
 static u32* bitmap = bitmap_data;
+static u32* allocated_bitmap = allocated_bitmap_data;
 
 static u32 total_pages = 0;
 static u32 bitmap_size = 0;
@@ -38,16 +41,30 @@ static inline void bitmap_clear(u32 page) {
     bitmap[BITMAP_INDEX(page)] &= ~ ((u32)1 << BITMAP_OFFSET(page));
 }
 
+static inline void allocated_bitmap_clear(u32 page) {
+    allocated_bitmap[BITMAP_INDEX(page)] &=
+        ~((u32)1 << BITMAP_OFFSET(page));
+}
+
 static inline bool bitmap_test(u32 page) {
     // bool == char 이라서 != 0 으로 비교 안하면 앞에 짤려서 8비트만 비교됨
     return (bitmap[BITMAP_INDEX(page)] & ((u32)1 << BITMAP_OFFSET(page))) != 0;
 }
 
+static inline void allocated_bitmap_set(u32 page) {
+    allocated_bitmap[BITMAP_INDEX(page)] |= ((u32)1 << BITMAP_OFFSET(page));
+}
+
+static inline bool allocated_bitmap_test(u32 page) {
+    return (allocated_bitmap[BITMAP_INDEX(page)] & ((u32)1 << BITMAP_OFFSET(page))) != 0;
+}
+
 // return = 할당한 4KB 페이지의 물리 주소, NULL = 할당 실패
-void* alloc_page() {
+void* page_alloc() {
     for (u32 i = last_alloc; i < total_pages; i++) {
         if (!bitmap_test(i)) {
             bitmap_set(i);
+            allocated_bitmap_set(i);
             last_alloc = i;
             // page * 4KB = page << 12 (실제 페이지는 4KB 단위로 관리되므로 12비트 시프트)
             return (void*)(i << 12);
@@ -57,6 +74,7 @@ void* alloc_page() {
     for (u32 i = 0; i < last_alloc; i++) {
         if (!bitmap_test(i)) {
             bitmap_set(i);
+            allocated_bitmap_set(i);
             last_alloc = i;
             // page * 4KB = page << 12 (실제 페이지는 4KB 단위로 관리되므로 12비트 시프트)
             return (void*)(i << 12);
@@ -65,7 +83,7 @@ void* alloc_page() {
     return NULL;
 }
 
-bool free_page(void* page) {
+bool page_free(void* page) {
     if (page == NULL) {
         return false;
     }
@@ -83,29 +101,42 @@ bool free_page(void* page) {
         return false; // 이미 free 상태
     }
 
+    if (!allocated_bitmap_test(idx)) {
+        return false;
+    }
+
+    allocated_bitmap_clear(idx);
     bitmap_clear(idx);
     return true;
 }
 
-void reserve_region(u32 start, u32 end) {
+bool reserve_region(u32 start, u32 end) {
     if (start >= end) {
-        return;
+        return false;
     }
 
     u32 start_page = start / PAGE_SIZE;
     u32 end_page = (u32)(((u64)end + PAGE_SIZE - 1) / PAGE_SIZE);
 
     if (end_page > total_pages) {
-        end_page = total_pages;
+        return false;
+    }
+
+    for (u32 page = start_page; page < end_page; page++) {
+        if (allocated_bitmap_test(page)) {
+            return false;
+        }
     }
 
     for (u32 page = start_page; page < end_page; page++) {
         bitmap_set(page);
     }
+
+    return true;
 }
 
-void init_pmm(struct e820_entry* map, u32 count, u32 kernel_start, u32 kernel_end) {
-    // 1. total_pages 계산 및 bitmap_size 계산: usable 영역 합산
+bool pmm_init(struct e820_entry* map, u32 count, u32 kernel_start, u32 kernel_end) {
+    // 1. E820 영역의 최대 끝 주소로 페이지 탐색 범위 계산
     total_pages = 0;
     for (u32 i = 0; i < count; i++) {
         u64 end = (map[i].base + map[i].length + (PAGE_SIZE - 1)) / PAGE_SIZE;
@@ -123,6 +154,7 @@ void init_pmm(struct e820_entry* map, u32 count, u32 kernel_start, u32 kernel_en
 
     // 2. 전부 used(1)로 초기화
     for (u32 i = 0; i < bitmap_size; i++) {
+        allocated_bitmap[i] = 0;
         bitmap[i] = 0xFFFFFFFF;
     }
 
@@ -146,19 +178,12 @@ void init_pmm(struct e820_entry* map, u32 count, u32 kernel_start, u32 kernel_en
     }
 
     // 4. 커널 영역 다시 used로 마킹
-    reserve_region(kernel_start, kernel_end);
-
-    // 5. bitmap 영역 used로 마킹
-    u32 bitmap_start = (u32)bitmap_data;
-    u32 bitmap_end = bitmap_start + bitmap_size * sizeof(u32);
-
-    u32 bstart_page = bitmap_start / PAGE_SIZE;
-    u32 bend_page = (bitmap_end + PAGE_SIZE - 1) / PAGE_SIZE;
-
-    for (u32 page = bstart_page; page < bend_page; page++) {
-        bitmap_set(page);
+    if (!reserve_region(kernel_start, kernel_end)) {
+        return false;
     }
 
-    // 6. page 0 (null guard) 항상 used
+    // 5. page 0 (null guard) 항상 used
     bitmap_set(0);
+
+    return true;
 }
