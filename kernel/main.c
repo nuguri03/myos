@@ -18,6 +18,9 @@
 #include "lib/kstring.h"
 #include "selftest.h"
 
+// shell
+#include "shell/shell.h"
+
 #define E820_COUNT_ADDR 0x4FC
 #define E820_BUF_ADDR   0x500
 
@@ -56,8 +59,6 @@ void main() {
     init_keyboard();
     serial_printf("KEYBOARD ok\n");
 
-    clear_vga();
-
     // serial_printf("--------------test--------------\n");
     // test_heap();
     
@@ -73,22 +74,19 @@ void main() {
     // serial_printf("--------------test--------------\n");
     // test_thread();
     
-    serial_printf("--------------test--------------\n");
-    test_preemption();
+    // serial_printf("--------------test--------------\n");
+    // test_preemption();
     
     serial_printf("--------------------------------\n");
     
     __asm__ volatile("sti");
 
     serial_printf("\nkernel is working....\n");
+    
+    shell_run();
 
+    // shell_run()이 오류로 반환했을 때 커널이 끝나지 않도록 대기
     while (1) {
-        char c = keyboard_getchar();
-        if (c) {
-            vga_putchar(c);
-        }
-        else {
-            __asm__ volatile("hlt");
-        }
+        __asm__ volatile("hlt");
     }
 }
