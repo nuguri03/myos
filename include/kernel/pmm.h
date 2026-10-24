@@ -16,6 +16,6 @@ bool page_free(void* page);
 // [start, end) 영역을 used로 마킹
 bool reserve_region(u32 start, u32 end);
 
-void pmm_init(struct e820_entry* map, u32 count, u32 kernel_start, u32 kernel_end);
+bool pmm_init(struct e820_entry* map, u32 count, u32 kernel_start, u32 kernel_end);
 
 #endif

@@ -122,7 +122,7 @@ bool reserve_region(u32 start, u32 end) {
         return false;
     }
 
-        for (u32 page = start_page; page < end_page; page++) {
+    for (u32 page = start_page; page < end_page; page++) {
         if (allocated_bitmap_test(page)) {
             return false;
         }
@@ -135,7 +135,7 @@ bool reserve_region(u32 start, u32 end) {
     return true;
 }
 
-void pmm_init(struct e820_entry* map, u32 count, u32 kernel_start, u32 kernel_end) {
+bool pmm_init(struct e820_entry* map, u32 count, u32 kernel_start, u32 kernel_end) {
     // 1. E820 영역의 최대 끝 주소로 페이지 탐색 범위 계산
     total_pages = 0;
     for (u32 i = 0; i < count; i++) {
@@ -178,8 +178,12 @@ void pmm_init(struct e820_entry* map, u32 count, u32 kernel_start, u32 kernel_en
     }
 
     // 4. 커널 영역 다시 used로 마킹
-    reserve_region(kernel_start, kernel_end);
+    if (!reserve_region(kernel_start, kernel_end)) {
+        return false;
+    }
 
     // 5. page 0 (null guard) 항상 used
     bitmap_set(0);
+
+    return true;
 }
