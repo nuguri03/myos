@@ -4,6 +4,7 @@
 #include "kernel/pmm.h"
 #include "kernel/paging.h"
 #include "kernel/kthread.h"
+#include "kernel/scheduler.h"
 
 #include "driver/pit.h"
 #include "driver/serial.h"
@@ -288,9 +289,12 @@ void test_preemption(void) {
     }
 
     // main -> A -> B -> main
-    main_task.next = &worker_a;
-    worker_a.next = &worker_b;
-    worker_b.next = &main_task;
+    if (!sched_add(&worker_a) || !sched_add(&worker_b)) {
+        serial_printf("[FAIL] scheduler registration\n");
+        for (;;) {
+            __asm__ volatile("cli; hlt");
+        }
+    }
 
     counter_a = 0;
     counter_b = 0;

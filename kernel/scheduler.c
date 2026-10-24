@@ -101,3 +101,32 @@ void yield() {
     context_switch(&prev->esp, next->esp);
     irq_restore(flags);
 }
+
+bool sched_add(struct task_struct* task) {
+    u32 flags = irq_save();
+
+    if (current == NULL || task == NULL) {
+        irq_restore(flags);
+        return false;
+    }
+
+    struct task_struct* last = current->next;
+    for (;;) {
+        if (last == task) {
+            irq_restore(flags);
+            return false;
+        }
+
+        if (last->next == current) {
+            break;
+        }
+
+        last = last->next;
+    }
+
+    task->next = current;
+    last->next = task;
+
+    irq_restore(flags);
+    return true;
+}
