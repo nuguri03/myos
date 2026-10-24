@@ -11,9 +11,9 @@ make
 make run
 ```
 
-## 이상향
-![alt text](docs/linux_kernel_diagram.png)
-> 최대한 되는대로 다 구현해보는게 목표
+## 메모리 배치
+
+![myos 메모리 배치](docs/myos-memory-layout.svg)
 
 ## 개발 현황
 
