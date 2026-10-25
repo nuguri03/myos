@@ -10,6 +10,13 @@ struct e820_entry {
     u32 acpi;     // ACPI 확장 속성 (대부분 무시)
 } __attribute__((packed));
 
+struct pmm_stats {
+    u32 usable_pages;
+    u32 reserved_pages;
+    u32 allocated_pages;
+    u32 free_pages;
+};
+
 void* page_alloc();
 bool page_free(void* page);
 
@@ -17,5 +24,7 @@ bool page_free(void* page);
 bool reserve_region(u32 start, u32 end);
 
 bool pmm_init(struct e820_entry* map, u32 count, u32 kernel_start, u32 kernel_end);
+
+const struct pmm_stats* pmm_get_stats();
 
 #endif

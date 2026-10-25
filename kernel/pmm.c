@@ -43,9 +43,12 @@ static u32* bitmap = bitmap_data;
 static u32* allocated_bitmap = allocated_bitmap_data;
 
 static u32 total_pages = 0;
-static u32 bitmap_size = 0;
+static u32 usable_pages = 0;
 
+static u32 bitmap_size = 0;
 static u32 last_alloc = 0;
+
+static struct pmm_stats stats;
 
 /* example(37th page)
 * 37th page -> 37 / 32 = 1 (bitmap[1]에 저장)
@@ -203,6 +206,14 @@ bool pmm_init(struct e820_entry* map, u32 count, u32 kernel_start, u32 kernel_en
         }
     }
 
+    // 커널 등을 예약하기 전, PMM이 사용 가능하게 연 페이지 수를 기록한다.
+    usable_pages = 0;
+    for (u32 page = 0; page < total_pages; page++) {
+        if (!bitmap_test(page)) {
+            usable_pages++;
+        }
+    }
+
     // 4. 커널 영역 다시 used로 마킹
     if (!reserve_region(kernel_start, kernel_end)) {
         return false;
@@ -212,4 +223,23 @@ bool pmm_init(struct e820_entry* map, u32 count, u32 kernel_start, u32 kernel_en
     bitmap_set(0);
 
     return true;
+}
+
+const struct pmm_stats* pmm_get_stats() {
+    stats.usable_pages = usable_pages;
+    stats.allocated_pages = 0;
+    stats.free_pages = 0;
+
+    for (u32 page = 0; page < total_pages; page++) {
+        if (!bitmap_test(page)) {
+            stats.free_pages++;
+        }
+        else if (allocated_bitmap_test(page)) {
+            stats.allocated_pages++;
+        }
+    }
+
+    stats.reserved_pages = stats.usable_pages - stats.allocated_pages - stats.free_pages;
+
+    return &stats;
 }
