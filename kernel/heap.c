@@ -1,6 +1,8 @@
 #include "kernel/heap.h"
 #include "kernel/pmm.h"
 
+#include "driver/serial.h"
+
 extern u32 _kernel_end;
 
 // 4KB 정렬                              
@@ -13,10 +15,9 @@ bool heap_init() {
     heap = NULL;
 
     if (HEAP_START >= HEAP_END || HEAP_START + HEADER_SIZE > HEAP_END) {
-        heap = NULL;
         return false;
     }
-
+    
     if (!reserve_region(HEAP_START, HEAP_END)) {
         return false;
     }
@@ -25,4 +26,6 @@ bool heap_init() {
     heap->size = HEAP_END - HEAP_START - HEADER_SIZE;
     heap->free = 1;
     heap->next = NULL;
+
+    return true;
 }
