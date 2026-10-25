@@ -21,7 +21,7 @@ struct block_header {
     struct block_header* next;
 };
 
-void init_heap();
+bool heap_init();
 
 void free(void* ptr);
 

@@ -27,6 +27,13 @@
 extern u32 _kernel_start;
 extern u32 _kernel_end;
 
+static inline void kernel_panic() {
+    __asm__ volatile("cli" ::: "memory");
+    while (1) {
+        __asm__ volatile("hlt");
+    }
+}
+
 void main() {
     // serial
     init_serial();
@@ -34,18 +41,27 @@ void main() {
     // physical memory management
     struct e820_entry* map = (struct e820_entry*)E820_BUF_ADDR;
     u32 count = *(u32*)E820_COUNT_ADDR;
-    init_pmm(map, count, (u32)&_kernel_start, (u32)&_kernel_end);
+    if (!pmm_init(map, count, (u32)&_kernel_start, (u32)&_kernel_end)) {
+        serial_printf("PMM initialization failed\n");
+        kernel_panic();
+    }
     serial_printf("PMM ok\n");
 
     // paging
     init_paging();
     serial_printf("PAGING ok\n");
     
-    // stack
-    reserve_region(0x013F0000, 0x01400000); // 64KB stack
+    // 64KB stack
+    if (!reserve_region(0x013F0000, 0x01400000)) {
+        serial_printf("STACK initialization failed\n");
+        kernel_panic();
+    }
 
     // heap
-    init_heap();
+    if (!heap_init()) {
+        serial_printf("HEAP initialization failed\n");
+        kernel_panic();
+    }
     serial_printf("HEAP ok\n");
 
     // GDT/IDT
