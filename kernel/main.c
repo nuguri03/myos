@@ -55,8 +55,7 @@ void main() {
     }
 
     // heap
-    heap_init();
-    if (heap == NULL) {
+    if (!heap_init()) {
         serial_printf("HEAP initialization failed\n");
         kernel_panic();
     }

@@ -11,6 +11,25 @@
 // PMM에서는 물리 페이지 하나의 할당 가능 여부를 비트 하나에 저장
 // u32 배열을 사용하여 배열 1개당 32개의 페이지 상태를 기록
 
+/*
+ * 물리 페이지마다 두 비트맵의 같은 위치에 상태를 기록한다.
+ *
+ * bitmap:
+ *   0 = 할당 가능한 빈 페이지
+ *   1 = 사용 중이거나 예약되어 할당할 수 없는 페이지
+ *
+ * allocated_bitmap:
+ *   0 = page_alloc()으로 할당한 페이지가 아님
+ *   1 = page_alloc()으로 할당하여 아직 해제하지 않은 페이지
+ *
+ * bitmap / allocated_bitmap:
+ *   0 / 0 = 빈 페이지
+ *   1 / 1 = 동적 할당 페이지
+ *   1 / 0 = 예약 또는 사용 불가능한 페이지
+ *   0 / 1 = 발생하면 안 되는 상태
+ *
+ */
+
 #define BITMAP_INDEX(page)  ((page) / 32)
 #define BITMAP_OFFSET(page) ((page) % 32)
 
@@ -33,6 +52,7 @@ static u32 last_alloc = 0;
 * 37 % 32 = 5 (bitmap[1]의 5번째 비트에 저장)
 */
 
+// bitmap
 static inline void bitmap_set(u32 page) {
     bitmap[BITMAP_INDEX(page)] |= ((u32)1 << BITMAP_OFFSET(page));
 }
@@ -41,18 +61,18 @@ static inline void bitmap_clear(u32 page) {
     bitmap[BITMAP_INDEX(page)] &= ~ ((u32)1 << BITMAP_OFFSET(page));
 }
 
-static inline void allocated_bitmap_clear(u32 page) {
-    allocated_bitmap[BITMAP_INDEX(page)] &=
-        ~((u32)1 << BITMAP_OFFSET(page));
-}
-
 static inline bool bitmap_test(u32 page) {
     // bool == char 이라서 != 0 으로 비교 안하면 앞에 짤려서 8비트만 비교됨
     return (bitmap[BITMAP_INDEX(page)] & ((u32)1 << BITMAP_OFFSET(page))) != 0;
 }
 
+// allocated_bitmap <- alloc_page()
 static inline void allocated_bitmap_set(u32 page) {
     allocated_bitmap[BITMAP_INDEX(page)] |= ((u32)1 << BITMAP_OFFSET(page));
+}
+
+static inline void allocated_bitmap_clear(u32 page) {
+    allocated_bitmap[BITMAP_INDEX(page)] &= ~((u32)1 << BITMAP_OFFSET(page));
 }
 
 static inline bool allocated_bitmap_test(u32 page) {
@@ -83,30 +103,35 @@ void* page_alloc() {
     return NULL;
 }
 
+// bitmap(1) && allocated_bitmap(1) -> free
 bool page_free(void* page) {
     if (page == NULL) {
         return false;
     }
 
+    // 주소가 4KB 정렬되었는지
     if (((u32)page & 0xFFF) != 0) {
-        return false; // 주소가 4KB 정렬되지 않음
+        return false; 
     }
 
+    // 범위 초과
     u32 idx = (u32)page >> 12;
     if (idx >= total_pages) {
-        return false; // 범위 초과
+        return false; 
     }
 
+    // 이미 free 상태
     if (!bitmap_test(idx)) {
-        return false; // 이미 free 상태
+        return false; 
     }
 
+    // page_alloc()으로 할당
     if (!allocated_bitmap_test(idx)) {
         return false;
     }
 
-    allocated_bitmap_clear(idx);
     bitmap_clear(idx);
+    allocated_bitmap_clear(idx);
     return true;
 }
 
@@ -151,6 +176,7 @@ bool pmm_init(struct e820_entry* map, u32 count, u32 kernel_start, u32 kernel_en
     }
 
     bitmap_size = (total_pages + 31) / 32;
+    last_alloc = 0;
 
     // 2. 전부 used(1)로 초기화
     for (u32 i = 0; i < bitmap_size; i++) {

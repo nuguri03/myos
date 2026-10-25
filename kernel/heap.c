@@ -9,16 +9,16 @@ extern u32 _kernel_end;
 
 struct block_header *heap = NULL;
 
-void heap_init() {
+bool heap_init() {
     heap = NULL;
 
     if (HEAP_START >= HEAP_END || HEAP_START + HEADER_SIZE > HEAP_END) {
         heap = NULL;
-        return;
+        return false;
     }
 
     if (!reserve_region(HEAP_START, HEAP_END)) {
-        return;
+        return false;
     }
 
     heap = (struct block_header *)HEAP_START;
