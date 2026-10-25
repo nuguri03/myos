@@ -9,15 +9,19 @@ extern u32 _kernel_end;
 
 struct block_header *heap = NULL;
 
-void init_heap() {
-    heap = (struct block_header *)HEAP_START;
-    if (HEAP_START + HEADER_SIZE > HEAP_END) {
+bool heap_init() {
+    heap = NULL;
+
+    if (HEAP_START >= HEAP_END || HEAP_START + HEADER_SIZE > HEAP_END) {
         heap = NULL;
-        return;
+        return false;
     }
 
-    reserve_region(HEAP_START, HEAP_END);
+    if (!reserve_region(HEAP_START, HEAP_END)) {
+        return false;
+    }
 
+    heap = (struct block_header *)HEAP_START;
     heap->size = HEAP_END - HEAP_START - HEADER_SIZE;
     heap->free = 1;
     heap->next = NULL;
