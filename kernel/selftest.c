@@ -166,7 +166,6 @@ void test_kprintf() {
     __asm__ volatile("int $0x03");
 }
 
-static struct task_struct main_task;
 static struct task_struct worker_task;
 
 static i32 worker_entry(void* data) {
@@ -182,10 +181,16 @@ static i32 worker_entry(void* data) {
 }
 
 void test_thread(void) {
-    sched_init(&main_task);
+    struct task_struct* main_task = get_sched_current();
+
+    if (main_task == NULL || main_task->next != main_task) {
+        serial_printf("FAIL: test requires only the boot task\n");
+        return;
+    }
 
     u32* shared = kmalloc(sizeof(u32));
     if (shared == NULL) {
+        serial_printf("FAIL: shared allocation\n");
         return;
     }
 
@@ -197,8 +202,18 @@ void test_thread(void) {
         return;
     }
 
-    main_task.next = &worker_task;
-    worker_task.next = &main_task;
+    if (!sched_add(&worker_task)) {
+        serial_printf("FAIL: scheduler registration\n");
+
+        // 등록되지 않았으므로 실행된 적 없는 스택을 직접 해제
+        kfree(worker_task.stack_base);
+        worker_task.stack_base = NULL;
+        worker_task.esp = 0;
+        worker_task.next = NULL;
+
+        kfree(shared);
+        return;
+    }
 
     while (!worker_task.exited) {
         *shared += 1;
@@ -208,18 +223,18 @@ void test_thread(void) {
 
     bool passed = true;
 
-    if (!worker_task.exited || worker_task.exit_code != 42) {
-        serial_printf("FAIL: worker exit state or code\n");
+    if (worker_task.exit_code != 42) {
+        serial_printf("FAIL: worker exit code\n");
         passed = false;
     }
 
-    if (main_task.next != &main_task) {
+    if (main_task->next != main_task) {
         serial_printf("FAIL: worker still linked\n");
         passed = false;
     }
 
     // 실행 목록에서 제거됐음을 확인한 뒤 회수
-    if (main_task.next == &main_task) {
+    if (main_task->next == main_task) {
         if (!kthread_reap(&worker_task)) {
             serial_printf("FAIL: worker stack cleanup\n");
             passed = false;
@@ -239,6 +254,7 @@ void test_thread(void) {
         serial_printf("PASS: thread exit and cleanup\n");
     }
 }
+
 
 static volatile u32 counter_a;
 static volatile u32 counter_b;
@@ -268,11 +284,15 @@ static i32 preempt_worker_b(void* data) {
 void test_preemption(void) {
     __asm__ volatile("cli" ::: "memory");
 
-    static struct task_struct main_task;
+    struct task_struct* main_task = get_sched_current();
+
     static struct task_struct worker_a;
     static struct task_struct worker_b;
 
-    sched_init(&main_task);
+    if (main_task == NULL || main_task->next != main_task) {
+        serial_printf("[FAIL] test requires only the boot task\n");
+        return;
+    }
 
     if (!kthread_create(&worker_a, preempt_worker_a, NULL)) {
         serial_printf("[FAIL] worker A creation\n");
@@ -288,7 +308,7 @@ void test_preemption(void) {
         }
     }
 
-    // main -> A -> B -> main
+    // boot task -> A -> B -> boot task
     if (!sched_add(&worker_a) || !sched_add(&worker_b)) {
         serial_printf("[FAIL] scheduler registration\n");
         for (;;) {
@@ -302,7 +322,6 @@ void test_preemption(void) {
     bool reaped_a = false;
     bool reaped_b = false;
     bool both_reaped = false;
-    bool finished = false;
 
     u32 last_tick = pit_get_ticks();
     u32 reaped_tick = 0;
@@ -348,20 +367,19 @@ void test_preemption(void) {
         }
 
         // 두 스택을 회수한 뒤에도 약 1초간 타이머가 동작하는지 확인
-        if (both_reaped && !finished &&
+        if (both_reaped &&
             (u32)(now - reaped_tick) >= 1000) {
             bool passed =
                 worker_a.exit_code == 11 &&
                 worker_b.exit_code == 22 &&
                 worker_a.stack_base == NULL &&
                 worker_b.stack_base == NULL &&
-                main_task.next == &main_task;
+                main_task->next == main_task;
 
             serial_printf(
                 "[%s] exit codes, stack cleanup, main-only timer\n",
                 passed ? "PASS" : "FAIL"
             );
-            finished = true;
             return;
         }
 
