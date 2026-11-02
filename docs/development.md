@@ -73,11 +73,17 @@
 - `yield` 기반 Round Robin 스케줄링
 - PIT 인터럽트를 이용한 선점형 스케줄링
 
-## [ ] **10. Kernel Shell**
+## [x] **10. Kernel Shell**
 - 한 줄 입력 및 기본 편집 처리
 - 명령어·인자 파싱
 - 커널 내부 명령 실행
 - 메모리 및 스레드 상태 확인 명령
+
+## [ ] **Plus. Virtual Memory Management**
+- PMM과 연계한 동적 페이지 테이블 할당 및 초기화
+- 기존 20 MiB Identity Mapping 범위 밖의 가상 주소 매핑
+- 가상 주소와 물리 주소가 다른 페이지의 읽기·쓰기 검증
+- 페이지 매핑 해제 및 동적 페이지 테이블 자원 회수
 
 ## [ ] **11. User Space & Processes**
 - 프로세스별 가상 주소 공간 구성

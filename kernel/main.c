@@ -27,6 +27,8 @@
 extern u32 _kernel_start;
 extern u32 _kernel_end;
 
+static struct task_struct boot_task = {0};
+
 static inline void kernel_panic() {
     __asm__ volatile("cli" ::: "memory");
     while (1) {
@@ -69,6 +71,10 @@ void main() {
     init_idt();
     serial_printf("GDT/IDT ok\n");
     
+    // scheduler
+    sched_init(&boot_task);
+    serial_printf("SCHEDULER ok\n");
+
     // device
     init_pit(1000);
     serial_printf("PIT ok\n");
@@ -87,11 +93,11 @@ void main() {
     // serial_printf("--------------test--------------\n");
     // test_page_fault(); // warning: cause interrupt
     
-    // serial_printf("--------------test--------------\n");
-    // test_thread();
+    serial_printf("--------------test--------------\n");
+    test_thread();
     
-    // serial_printf("--------------test--------------\n");
-    // test_preemption();
+    serial_printf("--------------test--------------\n");
+    test_preemption();
     
     serial_printf("--------------------------------\n");
     
